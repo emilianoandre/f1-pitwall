@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700&family=Martian+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+--f1-bg:#101215;--f1-bg2:#08090B;--f1-panel:#16181C;--f1-panel2:#0D0E11;--f1-elev:#26282E;
+--f1-border:#2A2D33;--f1-border2:#3A3E46;--f1-text:#FFFFFF;--f1-muted:#A6ABB2;--f1-muted2:#6B7178;
+--f1-accent:#E10600;--f1-accent2:#FF3B30;--f1-green:#34D058;--f1-amber:#FFC400;--f1-red:#E10600;
+--f1-purple:#C46BFF;--f1-cyan:#2BE0E0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--f1-bg2);color:var(--f1-text);font-family:'Saira',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+::selection{background:var(--f1-accent);color:#fff}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:1px;background:linear-gradient(90deg,var(--f1-accent) var(--pct,0%),var(--f1-border2) var(--pct,0%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:8px;height:22px;border-radius:1px;background:var(--f1-accent);border:none;margin-top:-8px;box-shadow:0 0 0 2px #fff,0 2px 6px rgba(0,0,0,.5)}
+@keyframes f1blink{0%,55%{opacity:1}56%,100%{opacity:.2}}
+@keyframes f1pulse{0%{box-shadow:0 0 0 0 rgba(232,56,79,.45)}70%{box-shadow:0 0 0 7px rgba(232,56,79,0)}100%{box-shadow:0 0 0 0 rgba(232,56,79,0)}}
+@keyframes f1rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:radial-gradient(1200px 700px at 78% -10%, rgba(225,6,0,.14), transparent 60%), var(--f1-bg2);">
+<svg viewBox="0 0 1000 560" style="position:absolute;width:2px;height:2px;opacity:0;pointer-events:none;left:-9999px"><path ref="{{ pathRef }}" d="{{ trackD }}" fill="none"></path></svg>
+
+<sc-if value="{{ isPicker }}" hint-placeholder-val="{{ true }}">
+<div style="max-width:1180px;margin:0 auto;padding:34px 32px 80px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:34px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:46px;height:46px;border-radius:3px;background:linear-gradient(135deg,var(--f1-accent),#7A0400);display:flex;align-items:center;justify-content:center;font-family:'Saira Condensed';font-weight:700;font-size:22px;box-shadow:0 6px 18px rgba(225,6,0,.35)">P</div>
+      <div>
+        <div style="font-family:'Saira Condensed';font-weight:700;font-size:20px;letter-spacing:.02em">PitWall</div>
+        <div style="font-size:12px;color:var(--f1-muted);letter-spacing:.04em">Race Intelligence · 2026 Season</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--f1-muted)">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--f1-green)"></span>Systems nominal
+    </div>
+  </div>
+
+  <div style="font-size:12px;letter-spacing:.16em;color:var(--f1-accent2);font-weight:600;margin-bottom:10px">HAPPENING NOW · ROUND 08</div>
+  <div style="border-radius:3px;overflow:hidden;border:1px solid var(--f1-border);background:linear-gradient(115deg,var(--f1-panel) 0%,#1A0C0C 55%,#2A0D0D 100%);box-shadow:0 20px 50px -20px rgba(0,0,0,.7);position:relative">
+    <div style="position:absolute;inset:0;background:radial-gradient(500px 300px at 88% 120%, rgba(232,56,79,.16), transparent 60%)"></div>
+    <div style="position:relative;padding:34px 36px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+      <div style="max-width:560px">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(232,56,79,.16);border:1px solid rgba(232,56,79,.4);color:#ff9aa6;padding:6px 12px;border-radius:1px;font-size:11.5px;font-weight:700;letter-spacing:.1em;margin-bottom:18px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--f1-red);animation:f1blink 1.4s infinite"></span>LIVE · LAP {{ lapNow }}/{{ totalLaps }}
+        </div>
+        <h1 style="font-family:'Saira Condensed';font-weight:700;font-size:42px;line-height:1.05;margin:0 0 8px">Canadian Grand Prix</h1>
+        <div style="color:var(--f1-muted);font-size:16px;margin-bottom:4px">Circuit Gilles Villeneuve · Montréal</div>
+        <div style="color:var(--f1-muted2);font-size:14px">Race · Dry · 24°C air / 41°C track</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+        <button onClick="{{ goLive }}" style="cursor:pointer;border:none;background:var(--f1-accent);color:#fff;font-family:'Saira Condensed';font-weight:500;font-size:15.5px;padding:14px 30px;border-radius:1px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 26px -8px rgba(225,6,0,.7);transition:transform .15s ease,box-shadow .15s ease" onMouseEnter="{{ liftIn }}" onMouseLeave="{{ liftOut }}">
+          <span style="font-size:19px">▶</span> Enter live session
+        </button>
+        <div style="font-size:12.5px;color:var(--f1-muted)">Positions, telemetry &amp; radio updating in real time</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin:36px 0 16px">
+    <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px">Replay a Session</div>
+    <div style="font-size:12.5px;color:var(--f1-muted)">Circuit Gilles Villeneuve · This weekend</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:38px">
+    <sc-for list="{{ sessions }}" as="s" hint-placeholder-count="5">
+      <button onClick="{{ s.on }}" style="cursor:pointer;text-align:left;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;padding:16px 16px 15px;transition:var(--f1-t,all .15s ease)" onMouseEnter="{{ liftIn }}" onMouseLeave="{{ liftOut }}">
+        <div style="font-size:11px;letter-spacing:.1em;color:var(--f1-muted2);font-weight:600;margin-bottom:8px">{{ s.tag }}</div>
+        <div style="font-family:'Saira Condensed';font-weight:500;font-size:16px;color:var(--f1-text);margin-bottom:6px">{{ s.name }}</div>
+        <div style="font-size:12.5px;color:var(--f1-muted)">{{ s.meta }}</div>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;flex-wrap:wrap;gap:12px">
+    <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px">Season Archive</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:12.5px;color:var(--f1-muted)">{{ archiveMeta }}</span>
+      <div style="display:flex;background:var(--f1-panel2);border:1px solid var(--f1-border);border-radius:1px;padding:4px">
+        <sc-for list="{{ yearOpts }}" as="y" hint-placeholder-count="4">
+          <button onClick="{{ y.on }}" style="{{ y.style }}">{{ y.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+    <sc-for list="{{ recordings }}" as="r" hint-placeholder-count="8">
+      <button onClick="{{ r.on }}" style="cursor:pointer;text-align:left;background:var(--f1-panel2);border:1px solid var(--f1-border);border-radius:3px;padding:0;overflow:hidden;transition:var(--f1-t,all .15s ease)" onMouseEnter="{{ liftIn }}" onMouseLeave="{{ liftOut }}">
+        <div style="height:5px;background:{{ r.color }}"></div>
+        <div style="padding:15px 16px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:11px;letter-spacing:.08em;color:var(--f1-muted2);font-weight:600">R{{ r.round }} · {{ r.date }}</span>
+            <span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--f1-muted);border:1px solid var(--f1-border2);padding:3px 7px;border-radius:6px">REPLAY</span>
+          </div>
+          <div style="font-family:'Saira Condensed';font-weight:500;font-size:16px;margin-bottom:3px">{{ r.gp }}</div>
+          <div style="font-size:12.5px;color:var(--f1-muted);margin-bottom:12px">{{ r.circuit }} · {{ r.laps }} laps</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+            <span style="width:20px;height:20px;border-radius:6px;background:{{ r.color }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">🏆</span>
+            <span style="color:var(--f1-muted)">Winner</span>
+            <span style="font-weight:600;color:var(--f1-text)">{{ r.winner }}</span>
+          </div>
+        </div>
+      </button>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1640px;margin:0 auto;padding:0 22px 34px">
+  <!-- top bar -->
+  <div style="position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--f1-bg2) 72%,transparent);padding:16px 0 12px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    <button onClick="{{ backToPicker }}" style="cursor:pointer;background:var(--f1-panel);border:1px solid var(--f1-border);color:var(--f1-muted);width:38px;height:38px;border-radius:3px;font-size:17px;display:flex;align-items:center;justify-content:center">←</button>
+    <div style="min-width:210px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="font-family:'Saira Condensed';font-weight:500;font-size:17px">{{ gpName }}</span>
+        <span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--f1-muted);border:1px solid var(--f1-border2);padding:2px 7px;border-radius:6px">{{ sessionLabel }}</span>
+      </div>
+      <div style="font-size:12px;color:var(--f1-muted)">{{ circuitName }}</div>
+    </div>
+
+    <!-- mode toggle -->
+    <div style="display:flex;background:var(--f1-panel2);border:1px solid var(--f1-border);border-radius:1px;padding:4px">
+      <button onClick="{{ setLive }}" style="{{ liveBtnStyle }}">
+        <span style="width:7px;height:7px;border-radius:50%;background:{{ liveDot }};display:inline-block;margin-right:7px;vertical-align:middle;animation:f1blink 1.4s infinite"></span>LIVE
+      </button>
+      <button onClick="{{ setReplay }}" style="{{ replayBtnStyle }}">REPLAY</button>
+    </div>
+
+    <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+      <div style="text-align:right">
+        <div style="font-size:10px;letter-spacing:.12em;color:var(--f1-muted2);font-weight:600">LAP</div>
+        <div style="font-family:'Martian Mono',monospace;font-weight:700;font-size:20px;line-height:1">{{ lapNow }}<span style="color:var(--f1-muted2);font-weight:400">/{{ totalLaps }}</span></div>
+      </div>
+      <div style="width:1px;height:34px;background:var(--f1-border)"></div>
+      <div style="text-align:right">
+        <div style="font-size:10px;letter-spacing:.12em;color:var(--f1-muted2);font-weight:600">RACE TIME</div>
+        <div style="font-family:'Martian Mono',monospace;font-weight:500;font-size:18px;line-height:1;color:var(--f1-muted)">{{ raceClock }}</div>
+      </div>
+      <div style="{{ flagStyle }}">{{ flagLabel }}</div>
+    </div>
+  </div>
+
+  <!-- replay transport -->
+  <sc-if value="{{ isReplay }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;align-items:center;gap:16px;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;padding:12px 18px;margin-bottom:14px">
+    <button onClick="{{ togglePlay }}" style="cursor:pointer;width:40px;height:40px;border-radius:50%;border:none;background:var(--f1-accent);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex:none">{{ playIcon }}</button>
+    <div style="font-family:'Martian Mono',monospace;font-size:13px;color:var(--f1-muted);flex:none;width:96px">{{ raceClock }} <span style="color:var(--f1-muted2)">/ {{ raceTotal }}</span></div>
+    <input type="range" min="0" max="100" step="0.1" value="{{ scrubValue }}" onInput="{{ onScrub }}" style="{{ scrubStyle }}">
+    <div style="display:flex;gap:5px;flex:none">
+      <sc-for list="{{ speedOpts }}" as="o" hint-placeholder-count="4">
+        <button onClick="{{ o.on }}" style="{{ o.style }}">{{ o.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- grid -->
+  <div style="display:grid;grid-template-columns:minmax(0,1.32fr) minmax(0,1fr) 336px;grid-template-areas:'track track board' 'tele timing board' 'tire tire board' 'weather radio h2h';gap:14px">
+
+    <!-- TRACK -->
+    <div style="grid-area:track;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden;box-shadow:var(--f1-el,0 1px 3px rgba(0,0,0,.4))">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 4px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Saira Condensed';font-weight:500;font-size:15px">Track Map</span><span style="font-size:11px;color:var(--f1-muted)">{{ circuitName }}</span></div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--f1-muted)">
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--f1-green);margin-right:5px;vertical-align:middle"></span>DRS zone</span>
+          <span><span style="display:inline-block;width:9px;height:2px;background:var(--f1-amber);margin-right:5px;vertical-align:middle"></span>Sector line</span>
+        </div>
+      </div>
+      <div style="height:360px;padding:6px 14px 12px">{{ trackMapEl }}</div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div style="grid-area:board;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--f1-border)">
+        <span style="font-family:'Saira Condensed';font-weight:500;font-size:15px">Live Timing</span>
+        <div style="display:flex;gap:14px;font-size:9.5px;letter-spacing:.08em;color:var(--f1-muted2);font-weight:600;padding-right:2px"><span style="width:52px;text-align:right">INTERVAL</span><span style="width:56px;text-align:right">LAST LAP</span></div>
+      </div>
+      <div style="overflow-y:auto;flex:1;min-height:0">
+        <sc-for list="{{ leaderboard }}" as="d" hint-placeholder-count="20">
+          <div onClick="{{ d.on }}" style="{{ d.rowStyle }}">
+            <span style="width:26px;height:22px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Saira Condensed';font-weight:700;font-size:14px;color:{{ d.posText }};background:{{ d.teamColor }};border-radius:2px">{{ d.pos }}</span>
+            <span style="width:10px;font-size:11px;text-align:center;color:{{ d.mvColor }}">{{ d.mv }}</span>
+            <span style="font-family:'Martian Mono',monospace;font-weight:700;font-size:13.5px;width:38px">{{ d.code }}</span>
+            <span style="flex:1;min-width:0;font-size:12.5px;color:var(--f1-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span>
+            <span style="{{ d.drsStyle }}">DRS</span>
+            <span style="{{ d.pitStyle }}">PIT</span>
+            <span style="width:16px;height:16px;border-radius:4px;flex:none;background:{{ d.tireColor }};color:{{ d.tireText }};font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ d.tireC }}</span>
+            <span style="width:52px;text-align:right;font-family:'Martian Mono',monospace;font-size:12px;color:{{ d.intColor }}">{{ d.interval }}</span>
+            <span style="width:56px;text-align:right;font-family:'Martian Mono',monospace;font-size:12px;color:{{ d.lastColor }}">{{ d.last }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- TELEMETRY -->
+    <div style="grid-area:tele;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+      <div style="padding:14px 18px 4px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:4px;height:16px;border-radius:2px;background:{{ focusColor }}"></span>
+          <span style="font-family:'Saira Condensed';font-weight:500;font-size:15px">Telemetry</span>
+          <span style="font-family:'Martian Mono',monospace;font-weight:700;font-size:13px">{{ focusCode }}</span>
+        </div>
+        <button onClick="{{ openFocus }}" style="cursor:pointer;background:transparent;border:1px solid var(--f1-border2);color:var(--f1-accent2);font-size:11.5px;padding:5px 12px;border-radius:1px">Driver detail →</button>
+      </div>
+      <div style="padding:6px 16px 16px">{{ telemetryEl }}</div>
+    </div>
+
+    <!-- TIMING / SECTORS -->
+    <div style="grid-area:timing;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+      <div style="padding:14px 18px 4px;display:flex;align-items:center;gap:10px"><span style="font-family:'Saira Condensed';font-weight:500;font-size:15px">Sector Times</span><span style="font-size:11px;color:var(--f1-muted)">Last completed lap</span></div>
+      <div style="padding:8px 12px 14px">{{ sectorEl }}</div>
+    </div>
+
+    <!-- TIRE STRATEGY -->
+    <div style="grid-area:tire;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+      <div style="padding:14px 18px 4px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Saira Condensed';font-weight:500;font-size:15px">Tire Strategy</span><span style="font-size:11px;color:var(--f1-muted)">Stints &amp; pit stops</span></div>
+        <div style="display:flex;gap:10px;font-size:10.5px;color:var(--f1-muted)">
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--f1-red);margin-right:4px;vertical-align:middle"></span>Soft</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--f1-amber);margin-right:4px;vertical-align:middle"></span>Medium</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#D8DEE9;margin-right:4px;vertical-align:middle"></span>Hard</span>
+        </div>
+      </div>
+      <div style="padding:8px 16px 16px">{{ tireEl }}</div>
+    </div>
+
+    <!-- WEATHER -->
+    <div style="grid-area:weather;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+      <div style="padding:14px 18px 4px;font-family:'Saira Condensed';font-weight:500;font-size:15px">Weather &amp; Track</div>
+      <div style="padding:6px 16px 16px">{{ weatherEl }}</div>
+    </div>
+
+    <!-- RADIO -->
+    <div style="grid-area:radio;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:14px 18px 8px;display:flex;align-items:center;gap:9px"><span style="font-family:'Saira Condensed';font-weight:500;font-size:15px">Team Radio</span><span style="width:7px;height:7px;border-radius:50%;background:var(--f1-red);animation:f1blink 1.4s infinite"></span></div>
+      <div style="padding:0 14px 14px;overflow-y:auto;max-height:210px;display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ radioList }}" as="m" hint-placeholder-count="5">
+          <div style="display:flex;gap:10px;animation:f1rise .3s ease">
+            <span style="width:3px;border-radius:2px;background:{{ m.color }};flex:none"></span>
+            <div style="min-width:0">
+              <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px"><span style="font-family:'Martian Mono',monospace;font-weight:700;font-size:12px;color:{{ m.color }}">{{ m.code }}</span><span style="font-size:10px;color:var(--f1-muted2)">{{ m.when }}</span></div>
+              <div style="font-size:12.5px;color:var(--f1-muted);line-height:1.4">{{ m.text }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- HEAD TO HEAD -->
+    <div style="grid-area:h2h;background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+      <div style="padding:14px 18px 4px;font-family:'Saira Condensed';font-weight:500;font-size:15px">Head to Head</div>
+      <div style="padding:8px 16px 16px">{{ h2hEl }}</div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDriver }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1300px;margin:0 auto;padding:0 22px 40px">
+  <div style="position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--f1-bg2) 75%,transparent);padding:16px 0 12px;display:flex;align-items:center;gap:14px">
+    <button onClick="{{ closeDriver }}" style="cursor:pointer;background:var(--f1-panel);border:1px solid var(--f1-border);color:var(--f1-muted);padding:9px 16px;border-radius:1px;font-size:13px;display:flex;align-items:center;gap:8px">← Back to dashboard</button>
+    <div style="margin-left:auto;font-size:12.5px;color:var(--f1-muted)">{{ gpName }} · {{ sessionLabel }} · Lap {{ lapNow }}/{{ totalLaps }}</div>
+  </div>
+
+  <div style="border-radius:3px;overflow:hidden;border:1px solid var(--f1-border);background:linear-gradient(110deg,var(--f1-panel),#1A0C0C);position:relative;margin-bottom:14px">
+    <div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:{{ focusColor }}"></div>
+    <div style="padding:22px 28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+      <div style="font-family:'Saira Condensed';font-weight:700;font-size:64px;line-height:.9;color:{{ focusColor }};min-width:78px">{{ focusNum }}</div>
+      <div>
+        <div style="font-family:'Saira Condensed';font-weight:700;font-size:30px;line-height:1.05">{{ focusName }}</div>
+        <div style="color:var(--f1-muted);font-size:14px">{{ focusTeam }}</div>
+      </div>
+      <div style="display:flex;gap:30px;margin-left:auto;flex-wrap:wrap">
+        <div><div style="font-size:11px;letter-spacing:.1em;color:var(--f1-muted2);font-weight:600">POS</div><div style="font-family:'Saira Condensed';font-weight:700;font-size:26px">P{{ focusPos }}</div></div>
+        <div><div style="font-size:11px;letter-spacing:.1em;color:var(--f1-muted2);font-weight:600">GAP TO LEAD</div><div style="font-family:'Martian Mono',monospace;font-weight:500;font-size:22px">{{ focusGap }}</div></div>
+        <div><div style="font-size:11px;letter-spacing:.1em;color:var(--f1-muted2);font-weight:600">LAST LAP</div><div style="font-family:'Martian Mono',monospace;font-weight:500;font-size:22px">{{ focusLast }}</div></div>
+        <div><div style="font-size:11px;letter-spacing:.1em;color:var(--f1-muted2);font-weight:600">BEST LAP</div><div style="font-family:'Martian Mono',monospace;font-weight:500;font-size:22px;color:var(--f1-purple)">{{ focusBest }}</div></div>
+        <div><div style="font-size:11px;letter-spacing:.1em;color:var(--f1-muted2);font-weight:600">TIRE</div><div style="font-family:'Saira Condensed';font-weight:700;font-size:22px">{{ focusTireC }}<span style="font-size:13px;color:var(--f1-muted);font-weight:400"> · {{ focusTireAge }}L</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1.5fr) 340px;gap:14px">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+        <div style="padding:14px 18px 4px;font-family:'Saira Condensed';font-weight:500;font-size:15px">Live Telemetry</div>
+        <div style="padding:6px 16px 16px">{{ telemetryEl }}</div>
+      </div>
+      <div style="background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+        <div style="padding:14px 18px 4px;display:flex;align-items:center;gap:10px"><span style="font-family:'Saira Condensed';font-weight:500;font-size:15px">Lap Time Trend</span><span style="font-size:11px;color:var(--f1-muted)">Race pace by lap</span></div>
+        <div style="padding:8px 16px 16px">{{ sparkEl }}</div>
+      </div>
+      <div style="background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+        <div style="padding:14px 18px 4px;font-family:'Saira Condensed';font-weight:500;font-size:15px">Stint History</div>
+        <div style="padding:10px 16px 16px">{{ driverStintEl }}</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden">
+        <div style="padding:14px 18px 4px;font-family:'Saira Condensed';font-weight:500;font-size:15px">Last Lap Sectors</div>
+        <div style="padding:10px 16px 16px">{{ driverSectorEl }}</div>
+      </div>
+      <div style="background:var(--f1-panel);border:1px solid var(--f1-border);border-radius:3px;overflow:hidden;display:flex;flex-direction:column;flex:1">
+        <div style="padding:14px 18px 8px;font-family:'Saira Condensed';font-weight:500;font-size:15px">Driver Radio</div>
+        <div style="padding:0 14px 14px;overflow-y:auto;max-height:340px;display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ radioFocus }}" as="m" hint-placeholder-count="3">
+            <div style="display:flex;gap:10px">
+              <span style="width:3px;border-radius:2px;background:{{ m.color }};flex:none"></span>
+              <div><div style="font-size:10px;color:var(--f1-muted2);margin-bottom:2px">{{ m.when }}</div><div style="font-size:12.5px;color:var(--f1-muted);line-height:1.4">{{ m.text }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1640,&quot;height&quot;:1080}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.LAPBASE = 74.0; this.TOTAL = 70;
+    this.RACE_T_TOTAL = this.TOTAL * this.LAPBASE;
+    // each circuit is a distinct waypoint loop, smoothed into an SVG path
+    this.TRACKS = {
+      gilles:  {pts:[[150,300],[300,300],[440,322],[482,296],[470,175],[512,108],[705,102],[842,160],[840,300],[762,356],[642,350],[590,405],[662,455],[610,506],[300,505],[150,440]]},
+      sakhir:  {pts:[[175,405],[470,405],[545,358],[470,292],[430,235],[482,188],[566,190],[612,240],[560,306],[648,330],[778,300],[842,214],[788,132],[560,116],[300,138],[182,242]]},
+      jeddah:  {pts:[[140,300],[250,286],[312,320],[392,296],[452,326],[534,298],[614,328],[694,300],[782,320],[856,272],[842,196],[738,176],[636,200],[556,178],[468,200],[380,178],[290,198],[192,188],[150,236]]},
+      melbourne:{pts:[[205,250],[288,178],[430,150],[566,162],[686,140],[806,204],[842,306],[800,404],[680,452],[540,430],[430,460],[318,430],[220,378],[178,318]]},
+      suzuka:  {pts:[[178,330],[240,232],[368,182],[498,206],[560,286],[512,352],[430,338],[452,268],[560,214],[700,166],[818,216],[856,330],[788,430],[642,452],[498,428],[420,468],[300,452],[210,400]]},
+      miami:   {pts:[[170,430],[520,430],[700,420],[820,360],[840,260],[780,180],[640,170],[600,220],[650,270],[560,300],[470,270],[430,200],[470,150],[380,150],[300,200],[260,300],[190,360]]},
+      monaco:  {pts:[[200,360],[300,380],[360,350],[340,280],[280,240],[320,190],[420,180],[470,140],[560,150],[600,210],[560,260],[620,300],[720,300],[780,260],[820,320],[780,400],[640,430],[480,430],[340,440],[240,420]]},
+      barcelona:{pts:[[180,320],[240,220],[380,170],[520,180],[600,140],[720,150],[820,220],[840,320],[780,410],[640,440],[560,400],[600,340],[520,320],[440,360],[360,420],[260,410],[200,380]]}
+    };
+
+    this.TEAMS = {
+      redbull:{name:'Red Bull Racing',color:'#2C64E6'},
+      ferrari:{name:'Scuderia Ferrari',color:'#E8384F'},
+      mercedes:{name:'Mercedes-AMG',color:'#27E0C4'},
+      mclaren:{name:'McLaren',color:'#FF8000'},
+      aston:{name:'Aston Martin',color:'#2AA37F'},
+      alpine:{name:'Alpine',color:'#3E9BE0'},
+      williams:{name:'Williams',color:'#4FA0F5'},
+      rb:{name:'Racing Bulls',color:'#8093FF'},
+      haas:{name:'Haas',color:'#C6CBD1'},
+      audi:{name:'Audi',color:'#D14A5E'},
+      cadillac:{name:'Cadillac',color:'#C79C5B'}
+    };
+    const D = [
+      ['VER','Max Verstappen',1,'redbull',74.02],
+      ['NOR','Lando Norris',4,'mclaren',74.10],
+      ['LEC','Charles Leclerc',16,'ferrari',74.17],
+      ['PIA','Oscar Piastri',81,'mclaren',74.23],
+      ['RUS','George Russell',63,'mercedes',74.33],
+      ['HAM','Lewis Hamilton',44,'ferrari',74.46],
+      ['ANT','Kimi Antonelli',12,'mercedes',74.61],
+      ['ALB','Alexander Albon',23,'williams',74.70],
+      ['SAI','Carlos Sainz',55,'williams',74.79],
+      ['ALO','Fernando Alonso',14,'aston',74.86],
+      ['GAS','Pierre Gasly',10,'alpine',74.96],
+      ['HAD','Isack Hadjar',6,'rb',75.03],
+      ['PER','Sergio Pérez',11,'cadillac',75.10],
+      ['OCO','Esteban Ocon',31,'haas',75.18],
+      ['TSU','Yuki Tsunoda',22,'redbull',75.25],
+      ['BEA','Oliver Bearman',87,'haas',75.32],
+      ['STR','Lance Stroll',18,'aston',75.39],
+      ['LAW','Liam Lawson',30,'rb',75.46],
+      ['HUL','Nico Hülkenberg',27,'audi',75.53],
+      ['COL','Franco Colapinto',43,'alpine',75.61],
+      ['BOT','Valtteri Bottas',77,'cadillac',75.68],
+      ['BOR','Gabriel Bortoleto',5,'audi',75.75]
+    ];
+    this.DR = {}; this.CODES = [];
+    D.forEach((r,i)=>{ this.DR[r[0]]={code:r[0],name:r[1],num:r[2],team:r[3],spl:r[4],idx:i}; this.CODES.push(r[0]); });
+    // deterministic 2-stop strategies
+    const COMP={S:{c:'S',col:'#E8384F',t:'#fff'},M:{c:'M',col:'#F5B301',t:'#1a1206'},H:{c:'H',col:'#D8DEE9',t:'#12181f'}};
+    this.COMP=COMP;
+    this.STINTS={};
+    this.CODES.forEach((c,i)=>{
+      const h1=this.h(i*3.1+1), h2=this.h(i*7.7+2);
+      const p1=Math.round(17+h1*8), p2=Math.round(42+h2*8);
+      const patt = i%3===0?['M','H','H'] : i%3===1?['M','M','H'] : ['S','M','H'];
+      this.STINTS[c]=[
+        {comp:patt[0],s:0,e:p1},{comp:patt[1],s:p1,e:p2},{comp:patt[2],s:p2,e:this.TOTAL}
+      ];
+    });
+
+    this.RADIO=[
+      {lap:31,code:'NOR',text:"Box, box this lap. We'll cover him on the mediums."},
+      {lap:33,code:'VER',text:"Rears are gone through the hairpin, I'm losing the front on entry."},
+      {lap:35,code:'LEC',text:"That's not fair, he pushed me wide at turn 2! Look at it."},
+      {lap:37,code:'HAM',text:"Great stop, thank you team. The car feels alive now."},
+      {lap:39,code:'RUS',text:"What's my gap to Piastri? I think I've got more pace than him."},
+      {lap:41,code:'PIA',text:"Understood, staying out. Give me the delta to Russell."},
+      {lap:43,code:'ALO',text:"There's debris on the exit of six — looks like a front wing endplate."},
+      {lap:44,code:'FIA',text:"Virtual Safety Car deployed. VSC, VSC. Delta positive."},
+      {lap:46,code:'VER',text:"Okay, VSC is ending. Get everything ready, we go green next lap."},
+      {lap:48,code:'SAI',text:"Good car. I can catch the Alpine ahead, keep the numbers coming."},
+      {lap:50,code:'NOR',text:"Fastest lap on offer? Copy, I'll have a look at the last sector."}
+    ];
+
+    this.YEARS=['2026','2025','2024','2023'];
+    this.ARCHIVES={
+      '2026':[
+        {round:1,gp:'Bahrain GP',circuit:'Sakhir',track:'sakhir',date:'Mar 8',laps:57,winner:'Verstappen',team:'redbull'},
+        {round:2,gp:'Saudi Arabian GP',circuit:'Jeddah',track:'jeddah',date:'Mar 22',laps:50,winner:'Norris',team:'mclaren'},
+        {round:3,gp:'Australian GP',circuit:'Melbourne',track:'melbourne',date:'Apr 5',laps:58,winner:'Leclerc',team:'ferrari'},
+        {round:4,gp:'Japanese GP',circuit:'Suzuka',track:'suzuka',date:'Apr 19',laps:53,winner:'Verstappen',team:'redbull'},
+        {round:5,gp:'Miami GP',circuit:'Miami Int’l',track:'miami',date:'May 3',laps:57,winner:'Piastri',team:'mclaren'},
+        {round:6,gp:'Monaco GP',circuit:'Monte Carlo',track:'monaco',date:'May 24',laps:78,winner:'Leclerc',team:'ferrari'},
+        {round:7,gp:'Spanish GP',circuit:'Barcelona',track:'barcelona',date:'Jun 7',laps:66,winner:'Norris',team:'mclaren'}
+      ],
+      '2025':[
+        {round:1,gp:'Bahrain GP',circuit:'Sakhir',track:'sakhir',date:'Mar 16',laps:57,winner:'Piastri',team:'mclaren'},
+        {round:2,gp:'Saudi Arabian GP',circuit:'Jeddah',track:'jeddah',date:'Apr 20',laps:50,winner:'Verstappen',team:'redbull'},
+        {round:3,gp:'Australian GP',circuit:'Melbourne',track:'melbourne',date:'Mar 16',laps:58,winner:'Norris',team:'mclaren'},
+        {round:4,gp:'Japanese GP',circuit:'Suzuka',track:'suzuka',date:'Apr 6',laps:53,winner:'Verstappen',team:'redbull'},
+        {round:5,gp:'Miami GP',circuit:'Miami Int’l',track:'miami',date:'May 4',laps:57,winner:'Norris',team:'mclaren'},
+        {round:6,gp:'Monaco GP',circuit:'Monte Carlo',track:'monaco',date:'May 25',laps:78,winner:'Norris',team:'mclaren'},
+        {round:7,gp:'Spanish GP',circuit:'Barcelona',track:'barcelona',date:'Jun 1',laps:66,winner:'Piastri',team:'mclaren'},
+        {round:8,gp:'Canadian GP',circuit:'Gilles Villeneuve',track:'gilles',date:'Jun 15',laps:70,winner:'Russell',team:'mercedes'}
+      ],
+      '2024':[
+        {round:1,gp:'Bahrain GP',circuit:'Sakhir',track:'sakhir',date:'Mar 2',laps:57,winner:'Verstappen',team:'redbull'},
+        {round:2,gp:'Saudi Arabian GP',circuit:'Jeddah',track:'jeddah',date:'Mar 9',laps:50,winner:'Verstappen',team:'redbull'},
+        {round:3,gp:'Australian GP',circuit:'Melbourne',track:'melbourne',date:'Mar 24',laps:58,winner:'Sainz',team:'ferrari'},
+        {round:4,gp:'Japanese GP',circuit:'Suzuka',track:'suzuka',date:'Apr 7',laps:53,winner:'Verstappen',team:'redbull'},
+        {round:5,gp:'Miami GP',circuit:'Miami Int’l',track:'miami',date:'May 5',laps:57,winner:'Norris',team:'mclaren'},
+        {round:6,gp:'Monaco GP',circuit:'Monte Carlo',track:'monaco',date:'May 26',laps:78,winner:'Leclerc',team:'ferrari'},
+        {round:7,gp:'Spanish GP',circuit:'Barcelona',track:'barcelona',date:'Jun 23',laps:66,winner:'Verstappen',team:'redbull'},
+        {round:8,gp:'Canadian GP',circuit:'Gilles Villeneuve',track:'gilles',date:'Jun 9',laps:70,winner:'Verstappen',team:'redbull'}
+      ],
+      '2023':[
+        {round:1,gp:'Bahrain GP',circuit:'Sakhir',track:'sakhir',date:'Mar 5',laps:57,winner:'Verstappen',team:'redbull'},
+        {round:2,gp:'Saudi Arabian GP',circuit:'Jeddah',track:'jeddah',date:'Mar 19',laps:50,winner:'Pérez',team:'redbull'},
+        {round:3,gp:'Australian GP',circuit:'Melbourne',track:'melbourne',date:'Apr 2',laps:58,winner:'Verstappen',team:'redbull'},
+        {round:4,gp:'Japanese GP',circuit:'Suzuka',track:'suzuka',date:'Sep 24',laps:53,winner:'Verstappen',team:'redbull'},
+        {round:5,gp:'Miami GP',circuit:'Miami Int’l',track:'miami',date:'May 7',laps:57,winner:'Verstappen',team:'redbull'},
+        {round:6,gp:'Monaco GP',circuit:'Monte Carlo',track:'monaco',date:'May 28',laps:78,winner:'Verstappen',team:'redbull'},
+        {round:7,gp:'Spanish GP',circuit:'Barcelona',track:'barcelona',date:'Jun 4',laps:66,winner:'Verstappen',team:'redbull'},
+        {round:8,gp:'Canadian GP',circuit:'Gilles Villeneuve',track:'gilles',date:'Jun 18',laps:70,winner:'Verstappen',team:'redbull'}
+      ]
+    };
+    this.SESSIONS=[
+      {tag:'FRIDAY',name:'Practice 1',meta:'90 min · full run'},
+      {tag:'FRIDAY',name:'Practice 2',meta:'90 min · long runs'},
+      {tag:'SATURDAY',name:'Practice 3',meta:'60 min · quali prep'},
+      {tag:'SATURDAY',name:'Qualifying',meta:'Q1–Q3 · grid set'},
+      {tag:'SUNDAY',name:'Race',meta:'70 laps · full replay'}
+    ];
+
+    this.pathRef = React.createRef();
+    this._hist=[];
+    this.state={
+      screen:'picker', mode:'live', session:'Race', playing:true, speedMult:1,
+      focus:'VER', T:40.28*this.LAPBASE, trackPts:null, trackSpeed:null, trackId:'gilles', archiveYear:'2026',
+      gpName:'Canadian Grand Prix', circuitName:'Circuit Gilles Villeneuve'
+    };
+    this.tick=this.tick.bind(this);
+  }
+
+  h(n){ const x=Math.sin(n*97.13+41.7)*43758.5453; return x-Math.floor(x); }
+
+  getD(id){ if(!this._dCache) this._dCache={}; if(this._dCache[id]) return this._dCache[id]; const pts=(this.TRACKS[id]||this.TRACKS.gilles).pts; const n=pts.length; let d='M'+pts[0][0]+','+pts[0][1]; for(let i=0;i<n;i++){ const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n]; const c1x=p1[0]+(p2[0]-p0[0])/6,c1y=p1[1]+(p2[1]-p0[1])/6,c2x=p2[0]-(p3[0]-p1[0])/6,c2y=p2[1]-(p3[1]-p1[1])/6; d+=' C'+c1x.toFixed(1)+','+c1y.toFixed(1)+' '+c2x.toFixed(1)+','+c2y.toFixed(1)+' '+p2[0]+','+p2[1]; } return this._dCache[id]=d+'Z'; }
+  contrastText(hex){ const c=hex.replace('#',''); const r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16); return (0.299*r+0.587*g+0.114*b)/255>0.62?'#0A0F1C':'#fff'; }
+  componentDidUpdate(pp,ps){ if(ps && ps.trackId!==this.state.trackId) this.sampleTrack(); }
+
+  componentDidMount(){ this.sampleTrack(); this.timer=setInterval(this.tick,100); }
+  componentWillUnmount(){ clearInterval(this.timer); }
+
+  sampleTrack(){
+    const p=this.pathRef.current; if(!p||!p.getTotalLength){ setTimeout(()=>this.sampleTrack(),120); return; }
+    const L=p.getTotalLength(); if(!L){ setTimeout(()=>this.sampleTrack(),120); return; }
+    const N=600, pts=[];
+    for(let i=0;i<N;i++){ const pt=p.getPointAtLength(L*i/N); pts.push({x:pt.x,y:pt.y}); }
+    let ang=[];
+    for(let i=0;i<N;i++){
+      const a=pts[(i-7+N)%N], b=pts[i], c=pts[(i+7)%N];
+      const v1x=b.x-a.x,v1y=b.y-a.y,v2x=c.x-b.x,v2y=c.y-b.y;
+      ang.push(Math.abs(Math.atan2(v1x*v2y-v1y*v2x, v1x*v2x+v1y*v2y)));
+    }
+    let sp=ang.map(a=>340-Math.min(a,0.55)/0.55*258);
+    for(let pass=0;pass<3;pass++){
+      const o=sp.slice();
+      for(let i=0;i<N;i++){ let s=0; for(let k=-8;k<=8;k++) s+=o[(i+k+N)%N]; sp[i]=s/17; }
+    }
+    this.setState({trackPts:pts, trackSpeed:sp, trackLen:L}); this._sampledTrack=this.state.trackId;
+  }
+
+  interp(arr,t){ const n=arr.length; let x=((t%1)+1)%1*n; let i=Math.floor(x); const f=x-i; i=i%n; return arr[i]+(arr[(i+1)%n]-arr[i])*f; }
+  pointAt(t){ const pts=this.state.trackPts; if(!pts) return {x:0,y:0}; const n=pts.length; let x=((t%1)+1)%1*n; let i=Math.floor(x)%n; const f=x-Math.floor(x); const a=pts[i],b=pts[(i+1)%n]; return {x:a.x+(b.x-a.x)*f, y:a.y+(b.y-a.y)*f}; }
+
+  dist(code,T){ const d=this.DR[code]; return T/d.spl + 0.0055*Math.sin(T*0.055 + d.idx*1.37); }
+  speedOf(code,T){ if(!this.state.trackSpeed) return 0; const t=this.dist(code,T)%1; const base=this.interp(this.state.trackSpeed,t); const pace=this.LAPBASE/this.DR[code].spl; return Math.max(60, base*pace + Math.sin(T*0.7+this.DR[code].idx)*4); }
+
+  currentStint(code,lap){ const st=this.STINTS[code]; for(const s of st){ if(lap>=s.s && lap<s.e) return s; } return st[st.length-1]; }
+  pitLaps(code){ return this.STINTS[code].slice(1).map(s=>s.s); }
+
+  lapTime(code,lap){
+    const d=this.DR[code]; const st=this.currentStint(code,lap); const age=lap-st.s;
+    let t=d.spl + age*0.018 + (this.h(d.idx*13.3+lap*2.1)-0.5)*0.34;
+    if(lap<=1) t+=1.3;
+    return t;
+  }
+  sectors(code,lap){ const base=this.lapTime(code,lap); const r=[0.316,0.401,0.283]; return r.map((rr,si)=> base*rr*(1+(this.h(code.charCodeAt(0)+si*31+lap*7)-0.5)*0.014)); }
+  bestLap(code,lap){ let mn=999; for(let l=2;l<=lap;l++){ const t=this.lapTime(code,l); if(t<mn)mn=t; } return mn===999?this.DR[code].spl:mn; }
+
+  order(T){ return this.CODES.slice().sort((a,b)=> this.dist(b,T)-this.dist(a,T)); }
+
+  fmtLap(s){ if(!isFinite(s)||s<=0) return '—'; const m=Math.floor(s/60); const r=(s-m*60); return m+':'+r.toFixed(3).padStart(6,'0'); }
+  fmtClock(T){ const h=Math.floor(T/3600),m=Math.floor((T%3600)/60),s=Math.floor(T%60); return (h>0?h+':':'')+String(m).padStart(h>0?2:1,'0')+':'+String(s).padStart(2,'0'); }
+  fmtGap(g,ref){ if(g>=1) return '+'+Math.floor(g)+(Math.floor(g)>1?' LAPS':' LAP'); return '+'+(g*ref).toFixed(1); }
+
+  tick(){
+    const s=this.state;
+    if(this._sampledTrack!==s.trackId){ this.sampleTrack(); }
+    if(s.screen==='picker'){ // keep live event advancing for picker lap counter
+      this.setState({T:s.T+0.1*8}); return;
+    }
+    if(!s.playing) { return; }
+    const rate=(s.mode==='live'?8:6)*s.speedMult;
+    let T=s.T+0.1*rate;
+    if(T>this.RACE_T_TOTAL) T=this.RACE_T_TOTAL;
+    const sp=this.speedOf(s.focus,T);
+    this._hist.push(sp); if(this._hist.length>110) this._hist.shift();
+    this.setState({T});
+  }
+
+  setFocus(code){ this._hist=[]; this.setState({focus:code}); }
+
+  renderVals(){
+    const S=this.state; const T=S.T; const h=React.createElement;
+    const ord=this.order(T);
+    const leaderDist=this.dist(ord[0],T);
+    const lapNow=Math.min(this.TOTAL, Math.floor(leaderDist)+1);
+    const flag=(lapNow===44||lapNow===45)?'VSC':'GREEN';
+
+    // ---- leaderboard rows ----
+    const prevOrd=this._prevOrd||ord; this._prevOrd=ord;
+    const leaderboard=ord.map((code,i)=>{
+      const d=this.DR[code]; const team=this.TEAMS[d.team];
+      const di=this.dist(code,T); const compLap=Math.max(1,Math.floor(di));
+      const gap=leaderDist-di;
+      const ahead=i>0?this.dist(ord[i-1],T):di;
+      const iv=ahead-di;
+      const st=this.currentStint(code,compLap); const comp=this.COMP[st.comp];
+      const last=this.lapTime(code,compLap);
+      const prevPos=prevOrd.indexOf(code);
+      const mv=prevPos>i?'▲':prevPos<i?'▼':'';
+      const isF=code===S.focus;
+      const drsAvail=i>0 && iv<1.0 && this.speedOf(code,T)>250;
+      const inPit=this.pitLaps(code).includes(compLap) && (di%1)>0.02 && (di%1)<0.10;
+      return {
+        pos:i+1, code, name:d.name, teamColor:team.color, posText:this.contrastText(team.color),
+        gap:i===0?'LEADER':this.fmtGap(gap,this.DR[ord[0]].spl),
+        interval:i===0?'—':this.fmtGap(iv,this.DR[ord[i-1]].spl),
+        intColor:i===0?'var(--f1-muted2)':(iv<1?'var(--f1-green)':'var(--f1-text)'),
+        last:this.fmtLap(last), lastColor:'var(--f1-text)',
+        tireC:comp.c, tireColor:comp.col, tireText:comp.t,
+        mv, mvColor:mv==='▲'?'var(--f1-green)':mv==='▼'?'var(--f1-red)':'transparent',
+        drsStyle:'font-size:8.5px;font-weight:700;letter-spacing:.04em;padding:2px 4px;border-radius:4px;flex:none;'+(drsAvail?'background:rgba(40,199,111,.18);color:var(--f1-green)':'background:transparent;color:transparent'),
+        pitStyle:'font-size:8.5px;font-weight:700;letter-spacing:.04em;padding:2px 4px;border-radius:4px;flex:none;'+(inPit?'background:rgba(245,179,1,.2);color:var(--f1-amber)':'display:none'),
+        rowStyle:'display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03);'+(isF?'background:linear-gradient(90deg,'+team.color+'22,transparent)':'')+';transition:background .12s ease',
+        on:()=>this.setFocus(code)
+      };
+    });
+
+    // ---- track map ----
+    let trackMapEl;
+    if(S.trackPts){
+      const dStr=this.getD(S.trackId);
+      const bed=h('path',{d:dStr,fill:'none',stroke:'#0A1120',strokeWidth:30,strokeLinejoin:'round',strokeLinecap:'round'});
+      const asphalt=h('path',{d:dStr,fill:'none',stroke:'#22314C',strokeWidth:22,strokeLinejoin:'round'});
+      const center=h('path',{d:dStr,fill:'none',stroke:'rgba(255,255,255,.16)',strokeWidth:1.4,strokeDasharray:'2 9'});
+      // DRS zones = high speed segments -> draw green overlay dashes
+      const N=S.trackSpeed.length; let drsSeg=[];
+      for(let i=0;i<N;i++){ if(S.trackSpeed[i]>300){ const p=this.pointAt(i/N); drsSeg.push(p.x+','+p.y); } }
+      const drs = drsSeg.length? h('polyline',{points:drsSeg.join(' '),fill:'none',stroke:'var(--f1-green)',strokeWidth:5,strokeLinecap:'round',opacity:.55}) : null;
+      // start/finish
+      const sf=this.pointAt(0); const sfn=this.pointAt(0.006);
+      const ang=Math.atan2(sfn.y-sf.y,sfn.x-sf.x)*180/Math.PI;
+      const sfLine=h('g',{transform:`translate(${sf.x},${sf.y}) rotate(${ang})`},
+        h('rect',{x:-2,y:-15,width:4,height:30,fill:'#fff',opacity:.9}));
+      // sector ticks
+      const ticks=[0.34,0.67].map((tt,k)=>{ const p=this.pointAt(tt); const p2=this.pointAt(tt+0.005); const a=Math.atan2(p2.y-p.y,p2.x-p.x)*180/Math.PI; return h('g',{key:k,transform:`translate(${p.x},${p.y}) rotate(${a})`}, h('rect',{x:-1.5,y:-13,width:3,height:26,fill:'var(--f1-amber)',opacity:.8})); });
+      // car markers = team-colored driver-code badges
+      const dots=[]; const focusDot=[];
+      ord.forEach((code,i)=>{
+        const d=this.DR[code]; const p=this.pointAt(this.dist(code,T)); const isF=code===S.focus;
+        const col=this.TEAMS[d.team].color; const txt=this.contrastText(col);
+        const bw=isF?36:29, bh=isF?18:15;
+        const grp=h('g',{key:code,transform:`translate(${p.x},${p.y})`,style:{transition:'transform .1s linear'}},
+          h('rect',{x:-bw/2,y:-bh/2,width:bw,height:bh,rx:bh/2, fill:col, stroke:isF?'#fff':'#0A0F1C', strokeWidth:isF?2:1.2}),
+          h('text',{x:0,y:isF?0.6:0.4,textAnchor:'middle',dominantBaseline:'middle',fill:txt,fontSize:isF?11:9.5,fontWeight:700,fontFamily:'Martian Mono, monospace'},code)
+        );
+        if(isF) focusDot.push(grp); else dots.push(grp);
+      });
+      trackMapEl=h('svg',{viewBox:'0 0 1000 560',style:{width:'100%',height:'100%'},preserveAspectRatio:'xMidYMid meet'},
+        bed,asphalt,center,drs,ticks,sfLine,dots,focusDot);
+    } else {
+      trackMapEl=h('div',{style:{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--f1-muted2)',fontSize:'13px'}},'Loading circuit…');
+    }
+
+    // ---- telemetry ----
+    const fSpeed=this.speedOf(S.focus,T); const ft=this.dist(S.focus,T)%1;
+    const sNext=this.state.trackSpeed?this.interp(this.state.trackSpeed,ft+0.012)*(this.LAPBASE/this.DR[S.focus].spl):fSpeed;
+    const ds=sNext-fSpeed;
+    let thr,brk;
+    if(ds>1){ thr=100; brk=0; } else if(ds<-3){ brk=Math.min(100,Math.max(25,-ds*7)); thr=0; } else { thr=Math.max(35,Math.min(100,72+ds*9)); brk=0; }
+    const gear=Math.max(1,Math.min(8,Math.round(fSpeed/44)+1));
+    const rpm=Math.min(12000, 7200 + ((fSpeed%44)/44)*4200 + (thr/100)*400);
+    const drsOn = fSpeed>298 && ds>=0;
+    const meter=(label,val,color,unit)=>h('div',{style:{flex:1}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:'10.5px',color:'var(--f1-muted)',marginBottom:'4px'}}, h('span',null,label), h('span',{style:{fontFamily:'Martian Mono, monospace',color:'var(--f1-text)'}}, Math.round(val)+unit)),
+      h('div',{style:{height:'7px',borderRadius:'1px',background:'var(--f1-border)',overflow:'hidden'}}, h('div',{style:{height:'100%',width:val+'%',background:color,transition:'width .1s linear'}})));
+    // trace
+    const hist=this._hist.length?this._hist:[fSpeed];
+    const HN=hist.length; const pts=hist.map((v,i)=>{ const x=i/(Math.max(1,110-1))*300; const y=88-(Math.max(0,Math.min(340,v))/340)*84; return x.toFixed(1)+','+y.toFixed(1); });
+    const area='0,90 '+pts.join(' ')+' '+(HN? (( (HN-1)/109*300).toFixed(1)):'0')+',90';
+    const traceEl=h('svg',{viewBox:'0 0 300 92',preserveAspectRatio:'none',style:{width:'100%',height:'70px',display:'block'}},
+      [0,85,170,255].map((y,k)=>h('line',{key:k,x1:0,x2:300,y1:y*0.27+4,y2:y*0.27+4,stroke:'rgba(255,255,255,.04)',strokeWidth:1})),
+      h('polygon',{points:area,fill:'rgba(225,6,0,.16)'}),
+      h('polyline',{points:pts.join(' '),fill:'none',stroke:'var(--f1-accent2)',strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round'}));
+
+    const telemetryEl=h('div',null,
+      h('div',{style:{display:'flex',alignItems:'flex-end',gap:'18px',marginBottom:'14px'}},
+        h('div',null,
+          h('div',{style:{fontFamily:'Martian Mono, monospace',fontWeight:700,fontSize:'44px',lineHeight:1}}, Math.round(fSpeed)),
+          h('div',{style:{fontSize:'11px',color:'var(--f1-muted)',letterSpacing:'.1em'}},'KM/H')),
+        h('div',{style:{marginLeft:'auto',textAlign:'center',background:'var(--f1-panel2)',border:'1px solid var(--f1-border2)',borderRadius:'3px',padding:'6px 16px'}},
+          h('div',{style:{fontSize:'10px',color:'var(--f1-muted2)',letterSpacing:'.1em'}},'GEAR'),
+          h('div',{style:{fontFamily:'Saira Condensed',fontWeight:700,fontSize:'30px',lineHeight:1}},gear)),
+        h('div',{style:{textAlign:'center',padding:'8px 14px',borderRadius:'3px',border:'1px solid '+(drsOn?'rgba(40,199,111,.5)':'var(--f1-border)'),background:drsOn?'rgba(40,199,111,.14)':'var(--f1-panel2)'}},
+          h('div',{style:{fontSize:'10px',color:'var(--f1-muted2)',letterSpacing:'.1em'}},'DRS'),
+          h('div',{style:{fontFamily:'Saira Condensed',fontWeight:700,fontSize:'16px',color:drsOn?'var(--f1-green)':'var(--f1-muted2)',lineHeight:'1.6'}}, drsOn?'OPEN':'—'))),
+      h('div',{style:{display:'flex',gap:'14px',marginBottom:'12px'}}, meter('THROTTLE',thr,'var(--f1-green)','%'), meter('BRAKE',brk,'var(--f1-red)','%')),
+      h('div',{style:{marginBottom:'12px'}}, meter('RPM',rpm/120,'linear-gradient(90deg,var(--f1-accent),var(--f1-amber) 82%,var(--f1-red))','')),
+      traceEl,
+      h('div',{style:{fontSize:'10.5px',color:'var(--f1-muted2)',marginTop:'2px',textAlign:'right'}},'Speed trace · last 11s'));
+
+    // ---- sector table (top rows) ----
+    const showN=ord.slice(0,7);
+    const secData=showN.map(code=>{ const cl=Math.max(1,Math.floor(this.dist(code,T))); return {code,sec:this.sectors(code,cl),last:this.lapTime(code,cl),best:this.bestLap(code,cl),team:this.TEAMS[this.DR[code].team]}; });
+    const fastSec=[0,1,2].map(i=>Math.min(...secData.map(d=>d.sec[i])));
+    const fastLap=Math.min(...secData.map(d=>d.last));
+    const secColor=(v,fast,best)=> v<=fast+0.0005?'var(--f1-purple)': v<=best+0.05?'var(--f1-green)':'var(--f1-text)';
+    const sectorEl=h('div',null,
+      h('div',{style:{display:'grid',gridTemplateColumns:'52px 1fr 1fr 1fr 74px',gap:'4px',fontSize:'9.5px',letterSpacing:'.06em',color:'var(--f1-muted2)',fontWeight:600,padding:'0 8px 6px'}},
+        h('span',null,'DRIVER'),h('span',{style:{textAlign:'right'}},'S1'),h('span',{style:{textAlign:'right'}},'S2'),h('span',{style:{textAlign:'right'}},'S3'),h('span',{style:{textAlign:'right'}},'LAST')),
+      secData.map(d=>h('div',{key:d.code,style:{display:'grid',gridTemplateColumns:'52px 1fr 1fr 1fr 74px',gap:'4px',alignItems:'center',padding:'5px 8px',borderTop:'1px solid rgba(255,255,255,.04)'}},
+        h('span',{style:{display:'flex',alignItems:'center',gap:'5px'}}, h('span',{style:{width:'3px',height:'13px',borderRadius:'2px',background:d.team.color}}), h('span',{style:{fontFamily:'Martian Mono, monospace',fontWeight:700,fontSize:'12px'}},d.code)),
+        [0,1,2].map(i=>h('span',{key:i,style:{textAlign:'right',fontFamily:'Martian Mono, monospace',fontSize:'11.5px',color:secColor(d.sec[i],fastSec[i],d.best*[0.316,0.401,0.283][i])}}, d.sec[i].toFixed(3))),
+        h('span',{style:{textAlign:'right',fontFamily:'Martian Mono, monospace',fontSize:'12px',fontWeight:600,color:d.last<=fastLap+0.0005?'var(--f1-purple)':'var(--f1-text)'}}, this.fmtLap(d.last)))));
+
+    // ---- tire gantt ----
+    const tireRows=ord.slice(0,8).map(code=>{ const cl=Math.max(1,Math.floor(this.dist(code,T))); return {code,team:this.TEAMS[this.DR[code].team],stints:this.STINTS[code],cl,pits:this.pitLaps(code)}; });
+    const tireEl=h('div',{style:{display:'flex',flexDirection:'column',gap:'7px'}},
+      tireRows.map(r=>h('div',{key:r.code,style:{display:'flex',alignItems:'center',gap:'10px'}},
+        h('span',{style:{width:'46px',display:'flex',alignItems:'center',gap:'5px',flex:'none'}}, h('span',{style:{width:'3px',height:'14px',borderRadius:'2px',background:r.team.color}}), h('span',{style:{fontFamily:'Martian Mono, monospace',fontWeight:700,fontSize:'12px'}},r.code)),
+        h('div',{style:{position:'relative',flex:1,height:'16px',borderRadius:'5px',overflow:'hidden',background:'var(--f1-panel2)'}},
+          r.stints.map((st,si)=>{ const comp=this.COMP[st.comp]; const l=st.s/this.TOTAL*100; const w=(Math.min(st.e,this.TOTAL)-st.s)/this.TOTAL*100; return h('div',{key:si,style:{position:'absolute',left:l+'%',width:w+'%',top:0,bottom:0,background:comp.col,borderRight:'1px solid var(--f1-panel)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'9px',fontWeight:700,color:comp.t}}, w>6?comp.c:''); }),
+          h('div',{style:{position:'absolute',left:(r.cl/this.TOTAL*100)+'%',top:'-2px',bottom:'-2px',width:'2px',background:'#fff',boxShadow:'0 0 4px rgba(255,255,255,.8)'}}))
+      )),
+      h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:'9.5px',color:'var(--f1-muted2)',padding:'2px 0 0 56px'}}, h('span',null,'Lap 1'), h('span',null,'Lap '+Math.round(this.TOTAL/2)), h('span',null,'Lap '+this.TOTAL)));
+
+    // ---- weather ----
+    const wx={ air:(23.8+Math.sin(T/340)*0.7).toFixed(1), track:(40.6+Math.sin(T/300)*1.4).toFixed(1), hum:Math.round(54+Math.sin(T/260)*4), wind:(11+Math.sin(T/200)*3).toFixed(0), rain:Math.max(0,Math.round(14+Math.sin(T/500)*10)) };
+    const wrow=(label,val,sub)=>h('div',{style:{background:'var(--f1-panel2)',border:'1px solid var(--f1-border)',borderRadius:'3px',padding:'11px 13px'}},
+      h('div',{style:{fontSize:'10.5px',color:'var(--f1-muted2)',letterSpacing:'.06em',marginBottom:'4px'}},label),
+      h('div',{style:{fontFamily:'Saira Condensed',fontWeight:700,fontSize:'20px'}}, val, h('span',{style:{fontSize:'12px',color:'var(--f1-muted)',fontWeight:400}},sub)));
+    const weatherEl=h('div',null,
+      h('div',{style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'11px'}},
+        h('div',{style:{width:'34px',height:'34px',borderRadius:'3px',background:'radial-gradient(circle at 40% 35%, #FFD666, #F5A201)',flex:'none'}}),
+        h('div',null, h('div',{style:{fontWeight:600,fontSize:'14px'}},'Sunny · Dry'), h('div',{style:{fontSize:'11.5px',color:'var(--f1-muted)'}},'Light cloud, low rain risk'))),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}},
+        wrow('AIR TEMP',wx.air,'°C'), wrow('TRACK TEMP',wx.track,'°C'),
+        wrow('HUMIDITY',wx.hum,'%'), wrow('WIND',wx.wind,' km/h')),
+      h('div',{style:{marginTop:'9px',display:'flex',alignItems:'center',gap:'8px',fontSize:'12px',color:'var(--f1-muted)'}},
+        h('span',null,'Rain probability'),
+        h('div',{style:{flex:1,height:'6px',borderRadius:'1px',background:'var(--f1-border)',overflow:'hidden'}}, h('div',{style:{height:'100%',width:wx.rain+'%',background:'var(--f1-cyan)'}})),
+        h('span',{style:{fontFamily:'Martian Mono, monospace',color:'var(--f1-text)'}}, wx.rain+'%')));
+
+    // ---- head to head: the battle around the focus driver (ahead / focus / behind) ----
+    const fi=ord.indexOf(S.focus);
+    const aheadCode=fi>0?ord[fi-1]:null;
+    const behindCode=fi<ord.length-1?ord[fi+1]:null;
+    const gapAhead = aheadCode? (this.dist(aheadCode,T)-this.dist(S.focus,T))*this.DR[aheadCode].spl : 0;
+    const gapBehind = behindCode? (this.dist(S.focus,T)-this.dist(behindCode,T))*this.DR[S.focus].spl : 0;
+    const battleRow=(code,role,gapSec)=>{
+      if(!code) return h('div',{key:role,style:{padding:'11px 12px',textAlign:'center',fontSize:'12px',color:'var(--f1-muted2)',border:'1px dashed var(--f1-border2)',borderRadius:'3px'}}, role==='ahead'?'Race leader — nothing ahead':'Last on track — nothing behind');
+      const cl=Math.max(1,Math.floor(this.dist(code,T))); const st=this.currentStint(code,cl); const comp=this.COMP[st.comp];
+      const team=this.TEAMS[this.DR[code].team]; const isFocus=role==='focus';
+      const name=this.DR[code].name.split(' ').slice(-1)[0];
+      return h('div',{key:role,onClick:()=>this.setFocus(code),style:{display:'flex',alignItems:'center',gap:'9px',padding:'8px 11px',borderRadius:'3px',cursor:'pointer',background:isFocus?team.color+'26':'var(--f1-panel2)',border:'1px solid '+(isFocus?team.color:'var(--f1-border)')}},
+        h('span',{style:{width:'4px',height:'26px',borderRadius:'2px',background:team.color,flex:'none'}}),
+        h('span',{style:{fontFamily:'Saira Condensed',fontWeight:700,fontSize:'13px',color:'var(--f1-muted)',width:'24px',flex:'none'}},'P'+(ord.indexOf(code)+1)),
+        h('div',{style:{flex:1,minWidth:0}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:'7px'}}, h('span',{style:{fontFamily:'Martian Mono, monospace',fontWeight:700,fontSize:'13.5px'}},code), h('span',{style:{fontSize:'12px',color:'var(--f1-muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},name)),
+          h('div',{style:{fontFamily:'Martian Mono, monospace',fontSize:'11px',color:'var(--f1-muted2)',marginTop:'1px'}},this.fmtLap(this.lapTime(code,cl)))),
+        h('span',{style:{width:'17px',height:'17px',borderRadius:'4px',flex:'none',background:comp.col,color:comp.t,fontSize:'9px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}},comp.c),
+        isFocus? h('span',{style:{fontSize:'9.5px',fontWeight:700,letterSpacing:'.06em',color:team.color,width:'54px',textAlign:'right',flex:'none'}},'FOCUS')
+          : h('span',{style:{width:'54px',textAlign:'right',flex:'none'}}, h('span',{style:{fontSize:'8.5px',letterSpacing:'.06em',color:'var(--f1-muted2)',display:'block'}}, role==='ahead'?'AHEAD':'BEHIND'), h('span',{style:{fontFamily:'Martian Mono, monospace',fontSize:'12.5px',fontWeight:600,color:role==='ahead'?'var(--f1-red)':'var(--f1-green)'}}, '+'+gapSec.toFixed(1))));
+    };
+    const h2hEl=h('div',{style:{display:'flex',flexDirection:'column',gap:'7px'}},
+      battleRow(aheadCode,'ahead',gapAhead),
+      battleRow(S.focus,'focus',0),
+      battleRow(behindCode,'behind',gapBehind));
+
+    // ---- focus meta ----
+    const fcl=Math.max(1,Math.floor(this.dist(S.focus,T))); const fst=this.currentStint(S.focus,fcl);
+    const focusMeta={
+      focusCode:S.focus, focusName:this.DR[S.focus].name, focusNum:this.DR[S.focus].num,
+      focusTeam:this.TEAMS[this.DR[S.focus].team].name, focusColor:this.TEAMS[this.DR[S.focus].team].color,
+      focusPos:ord.indexOf(S.focus)+1, focusGap:ord.indexOf(S.focus)===0?'LEADER':this.fmtGap(leaderDist-this.dist(S.focus,T),this.DR[ord[0]].spl),
+      focusLast:this.fmtLap(this.lapTime(S.focus,fcl)), focusBest:this.fmtLap(this.bestLap(S.focus,fcl)),
+      focusTireC:this.COMP[fst.comp].c, focusTireAge:fcl-fst.s
+    };
+
+    // ---- driver detail extras ----
+    let sparkEl=null, driverStintEl=null, driverSectorEl=null, radioFocus=[];
+    if(S.screen==='driver'){
+      const laps=[]; for(let l=2;l<=fcl;l++) laps.push({l,t:this.lapTime(S.focus,l)});
+      const mn=Math.min(...laps.map(x=>x.t)), mx=Math.max(...laps.map(x=>x.t));
+      const W=560,Hh=120; const sp=laps.map((x,i)=>{ const px=laps.length>1?i/(laps.length-1)*W:0; const py=Hh-((x.t-mn)/((mx-mn)||1))*(Hh-16)-8; return {px,py,x}; });
+      sparkEl=h('div',null,
+        h('svg',{viewBox:'0 0 '+W+' '+Hh,preserveAspectRatio:'none',style:{width:'100%',height:'130px',display:'block'}},
+          h('polyline',{points:sp.map(p=>p.px+','+p.py).join(' '),fill:'none',stroke:'var(--f1-accent2)',strokeWidth:2}),
+          sp.filter(p=>Math.abs(p.x.t-mn)<0.001).map((p,k)=>h('circle',{key:k,cx:p.px,cy:p.py,r:4,fill:'var(--f1-purple)'})) ),
+        h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'var(--f1-muted)',marginTop:'6px'}},
+          h('span',null,'Lap 2'), h('span',{style:{color:'var(--f1-purple)'}},'● Fastest: '+this.fmtLap(mn)), h('span',null,'Lap '+fcl)));
+      driverStintEl=h('div',{style:{display:'flex',flexDirection:'column',gap:'10px'}},
+        this.STINTS[S.focus].map((st,si)=>{ const comp=this.COMP[st.comp]; const end=Math.min(st.e,fcl); const done=end>st.s; const laps=Math.max(0,end-st.s); return done?h('div',{key:si,style:{display:'flex',alignItems:'center',gap:'12px'}},
+          h('div',{style:{width:'34px',height:'34px',borderRadius:'3px',background:comp.col,color:comp.t,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:'15px',flex:'none'}},comp.c),
+          h('div',{style:{flex:1}}, h('div',{style:{fontWeight:600,fontSize:'13.5px'}},'Stint '+(si+1)+' · '+(st.comp==='S'?'Soft':st.comp==='M'?'Medium':'Hard')),
+            h('div',{style:{fontSize:'12px',color:'var(--f1-muted)'}},'Laps '+(st.s+1)+'–'+end+' · '+laps+' laps'+(st.e>fcl?' (current)':''))),
+          h('div',{style:{fontFamily:'Martian Mono, monospace',fontSize:'12px',color:'var(--f1-muted)'}}, st.e>fcl?'RUNNING':'PIT L'+st.e)):null; }));
+      const dsec=this.sectors(S.focus,fcl);
+      driverSectorEl=h('div',{style:{display:'flex',flexDirection:'column',gap:'9px'}},
+        dsec.map((v,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:'12px'}},
+          h('div',{style:{width:'30px',fontSize:'12px',color:'var(--f1-muted)',fontWeight:600}},'S'+(i+1)),
+          h('div',{style:{flex:1,height:'26px',borderRadius:'7px',background:'var(--f1-panel2)',position:'relative',overflow:'hidden'}},
+            h('div',{style:{position:'absolute',left:0,top:0,bottom:0,width:(v/Math.max(...dsec)*100)+'%',background:'linear-gradient(90deg,'+focusMeta.focusColor+'88,'+focusMeta.focusColor+')'}})),
+          h('div',{style:{fontFamily:'Martian Mono, monospace',fontSize:'13px',width:'56px',textAlign:'right'}},v.toFixed(3)))),
+        h('div',{style:{display:'flex',justifyContent:'space-between',borderTop:'1px solid var(--f1-border)',paddingTop:'9px',marginTop:'2px'}},
+          h('span',{style:{fontSize:'12px',color:'var(--f1-muted)'}},'Lap total'),
+          h('span',{style:{fontFamily:'Martian Mono, monospace',fontWeight:700,fontSize:'15px'}},this.fmtLap(this.lapTime(S.focus,fcl)))));
+      radioFocus=this.RADIO.filter(m=>m.lap<=lapNow && m.code===S.focus).reverse().map(m=>({color:focusMeta.focusColor,text:m.text,when:'LAP '+m.lap}));
+      if(!radioFocus.length) radioFocus=[{color:focusMeta.focusColor,text:'No radio messages logged for this driver yet.',when:'—'}];
+    }
+
+    // ---- radio list ----
+    const radioList=this.RADIO.filter(m=>m.lap<=lapNow).reverse().map(m=>{
+      const isFia=m.code==='FIA';
+      return { code:m.code, text:m.text, when:'LAP '+m.lap, color:isFia?'var(--f1-muted)':this.TEAMS[this.DR[m.code].team].color };
+    });
+
+    // ---- controls / styles ----
+    const isLive=S.mode==='live', isReplay=S.mode==='replay';
+    const segBtn=(active)=>'cursor:pointer;border:none;background:'+(active?'var(--f1-elev)':'transparent')+';color:'+(active?'var(--f1-text)':'var(--f1-muted)')+';font-family:Saira Condensed;font-weight:500;font-size:12.5px;letter-spacing:.04em;padding:7px 16px;border-radius:1px;transition:all .15s ease';
+    const speedOpts=[0.5,1,2,4].map(v=>({label:v+'×',on:()=>this.setState({speedMult:v}),style:'cursor:pointer;border:1px solid '+(S.speedMult===v?'var(--f1-accent)':'var(--f1-border2)')+';background:'+(S.speedMult===v?'rgba(225,6,0,.18)':'transparent')+';color:'+(S.speedMult===v?'var(--f1-accent2)':'var(--f1-muted)')+';font-family:Martian Mono, monospace;font-size:12px;padding:6px 10px;border-radius:3px'}));
+    const scrubValue=(T/this.RACE_T_TOTAL*100);
+
+    return {
+      isPicker:S.screen==='picker', isDash:S.screen==='dashboard', isDriver:S.screen==='driver',
+      trackD:this.getD(S.trackId), pathRef:this.pathRef,
+      gpName:S.gpName, circuitName:S.circuitName, sessionLabel:S.session,
+      lapNow, totalLaps:this.TOTAL, raceClock:this.fmtClock(T), raceTotal:this.fmtClock(this.RACE_T_TOTAL),
+      flagLabel:flag, flagStyle:'font-family:Saira Condensed;font-weight:700;font-size:12px;letter-spacing:.08em;padding:8px 14px;border-radius:3px;'+(flag==='VSC'?'background:rgba(245,179,1,.18);color:var(--f1-amber);border:1px solid rgba(245,179,1,.4)':'background:rgba(40,199,111,.15);color:var(--f1-green);border:1px solid rgba(40,199,111,.35)'),
+      isReplay, isLive,
+      liveDot:isLive?'var(--f1-red)':'var(--f1-muted2)',
+      liveBtnStyle:segBtn(isLive), replayBtnStyle:segBtn(isReplay),
+      playIcon:S.playing?'❚❚':'▶', playing:S.playing,
+      speedOpts, scrubValue, scrubStyle:'flex:1;--pct:'+scrubValue+'%',
+      onScrub:(e)=>this.setState({T:(+e.target.value)/100*this.RACE_T_TOTAL}),
+      togglePlay:()=>this.setState(s=>({playing:!s.playing})),
+      setLive:()=>this.setState({mode:'live',playing:true}),
+      setReplay:()=>this.setState({mode:'replay',playing:true}),
+      leaderboard, trackMapEl, telemetryEl, sectorEl, tireEl, weatherEl, h2hEl, radioList,
+      focusColor:focusMeta.focusColor, focusCode:S.focus,
+      ...focusMeta,
+      sparkEl, driverStintEl, driverSectorEl, radioFocus,
+      openFocus:()=>this.setState({screen:'driver'}),
+      openDriver:(c)=>{ this.setFocus(c); this.setState({screen:'driver'}); },
+      closeDriver:()=>this.setState({screen:'dashboard'}),
+      backToPicker:()=>this.setState({screen:'picker'}),
+      goLive:()=>this.setState({screen:'dashboard',mode:'live',session:'Race',trackId:'gilles',gpName:'Canadian Grand Prix',circuitName:'Circuit Gilles Villeneuve',playing:true}),
+      sessions:this.SESSIONS.map(s=>({tag:s.tag,name:s.name,meta:s.meta,on:()=>this.setState({screen:'dashboard',mode:'replay',session:s.name,trackId:'gilles',gpName:'Canadian Grand Prix',circuitName:'Circuit Gilles Villeneuve',playing:true})})),
+      archiveMeta:this.ARCHIVES[S.archiveYear].length+' rounds · '+S.archiveYear+' season',
+      yearOpts:this.YEARS.map(y=>({label:y,on:()=>this.setState({archiveYear:y}),style:'cursor:pointer;border:none;background:'+(S.archiveYear===y?'var(--f1-elev)':'transparent')+';color:'+(S.archiveYear===y?'var(--f1-text)':'var(--f1-muted)')+';font-family:Martian Mono, monospace;font-weight:500;font-size:12.5px;padding:6px 13px;border-radius:1px;transition:all .15s ease'})),
+      recordings:this.ARCHIVES[S.archiveYear].map(r=>({round:r.round,gp:r.gp,circuit:r.circuit,date:r.date,laps:r.laps,winner:r.winner,color:this.TEAMS[r.team].color,on:()=>this.setState({screen:'dashboard',mode:'replay',session:'Race',trackId:r.track,gpName:r.gp,circuitName:r.circuit,playing:true})})),
+      liftIn:(e)=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.borderColor='var(--f1-border2)';},
+      liftOut:(e)=>{e.currentTarget.style.transform='none';e.currentTarget.style.borderColor='';}
+    };
+  }
+}
+</script>
+</body>
+</html>

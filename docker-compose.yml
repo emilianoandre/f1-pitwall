@@ -1,0 +1,35 @@
+services:
+  ingest:
+    build:
+      context: .
+      dockerfile: apps/ingest/Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: "4000"
+      ALLOWED_ORIGIN: "http://localhost:3000"
+      DATA_DIR: "/data/recordings"
+      LOG_LEVEL: "info"
+    volumes:
+      # Persists downloaded session recordings across container rebuilds.
+      - ./data/recordings:/data/recordings
+    # Starts in player mode (pick sessions from the UI). To start connected to the
+    # live feed instead:
+    #   command: ["pnpm", "exec", "tsx", "src/main.ts", "--live"]
+    # To auto-load a downloaded recording on boot:
+    #   command: ["pnpm", "exec", "tsx", "src/main.ts", "--load", "<recordingId>"]
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the client bundle at build time. For a real deploy set this
+        # to the ingest service's public URL.
+        NEXT_PUBLIC_INGEST_URL: "http://localhost:4000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - ingest
+    restart: unless-stopped

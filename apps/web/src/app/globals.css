@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --f1-bg: #101215;
+  --f1-bg2: #08090b;
+  --f1-panel: #16181c;
+  --f1-panel2: #0d0e11;
+  --f1-elev: #26282e;
+  --f1-border: #2a2d33;
+  --f1-border2: #3a3e46;
+  --f1-text: #ffffff;
+  --f1-muted: #a6abb2;
+  --f1-muted2: #6b7178;
+  --f1-accent: #e10600;
+  --f1-accent2: #ff3b30;
+  --f1-green: #34d058;
+  --f1-amber: #ffc400;
+  --f1-red: #e10600;
+  --f1-purple: #c46bff;
+  --f1-cyan: #2be0e0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--f1-bg2);
+  color: var(--f1-text);
+  font-family: "Saira", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--f1-accent);
+  color: #fff;
+}
+
+/* The whole app sits on a near-black base with a red radial glow top-right. */
+.f1-app {
+  min-height: 100vh;
+  background: radial-gradient(1200px 700px at 78% -10%, rgba(225, 6, 0, 0.14), transparent 60%),
+    var(--f1-bg2);
+}
+
+/* Type helpers */
+.f1-cond {
+  font-family: "Saira Condensed", "Saira", sans-serif;
+}
+.f1-mono {
+  font-family: "Martian Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.f1-overline {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--f1-muted2);
+  font-weight: 600;
+}
+
+/* Panel surface */
+.f1-panel {
+  background: var(--f1-panel);
+  border: 1px solid var(--f1-border);
+  border-radius: 3px;
+}
+
+/* Broadcast scrubber: 6px track, red fill via --pct, white-outlined bar thumb. */
+input[type="range"].f1-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 22px;
+}
+input[type="range"].f1-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--f1-accent) var(--pct, 0%),
+    var(--f1-border2) var(--pct, 0%)
+  );
+}
+input[type="range"].f1-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 22px;
+  border-radius: 1px;
+  background: var(--f1-accent);
+  border: none;
+  margin-top: -8px;
+  box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+input[type="range"].f1-range::-moz-range-track {
+  height: 6px;
+  border-radius: 1px;
+  background: var(--f1-border2);
+}
+input[type="range"].f1-range::-moz-range-progress {
+  height: 6px;
+  background: var(--f1-accent);
+}
+input[type="range"].f1-range::-moz-range-thumb {
+  width: 8px;
+  height: 22px;
+  border-radius: 1px;
+  background: var(--f1-accent);
+  border: 2px solid #fff;
+}
+
+@keyframes f1blink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0.2;
+  }
+}
+@keyframes f1pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(232, 56, 79, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(232, 56, 79, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 56, 79, 0);
+  }
+}
+@keyframes f1rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.f1-blink {
+  animation: f1blink 1.4s infinite;
+}
+.f1-rise {
+  animation: f1rise 0.3s ease;
+}
+
+/* Hover lift for cards/buttons */
+.f1-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.f1-lift:hover {
+  transform: translateY(-2px);
+  border-color: var(--f1-border2);
+}

@@ -1,0 +1,11 @@
+import { chromium } from "playwright";
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1600, height: 1200 } });
+await p.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
+await p.waitForFunction(() => /IN\/OUT LAPS EXCLUDED/i.test(document.body.innerText), { timeout: 60000 }).catch(()=>console.log("(timed out)"));
+await p.waitForTimeout(1500);
+const panel = await p.$("main > :last-child");
+if (panel) await panel.screenshot({ path: "/tmp/f1shots/longruns.png" });
+const ok = await p.evaluate(() => /IN\/OUT LAPS EXCLUDED/i.test(document.body.innerText));
+console.log(JSON.stringify({ populated: ok }));
+await b.close();

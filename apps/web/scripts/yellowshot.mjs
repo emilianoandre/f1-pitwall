@@ -1,0 +1,11 @@
+import { chromium } from "playwright";
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1600, height: 1100 } });
+await p.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
+await p.waitForFunction(() => document.querySelectorAll("#cars g").length >= 15, { timeout: 20000 }).catch(()=>{});
+await p.waitForTimeout(1500);
+const yellow = await p.evaluate(() => document.querySelectorAll("svg path.flag-pulse").length);
+const map = await p.$("svg");
+if (map) await map.screenshot({ path: "/tmp/f1shots/yellow-refined.png" });
+console.log(JSON.stringify({ yellowSectorPaths: yellow }));
+await b.close();
