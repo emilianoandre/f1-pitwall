@@ -1,0 +1,35 @@
+# F1 Pitwall — ingest service on Render
+#
+# The Next.js frontend (apps/web) stays on Vercel per DEPLOY.md.
+# This Blueprint deploys the long-running SSE ingest server (apps/ingest).
+#
+# After pushing this file:
+#   https://dashboard.render.com/blueprint/new?repo=https://github.com/emilianoandre/f1-pitwall
+#
+# Then set ALLOWED_ORIGIN to your Vercel URL and point NEXT_PUBLIC_INGEST_URL
+# at the Render service URL (redeploy Vercel after).
+
+services:
+  - type: web
+    name: f1-ingest
+    runtime: docker
+    plan: starter # required for persistent disk; use `free` and remove `disk` for a trial deploy
+    region: oregon
+    branch: main
+    autoDeploy: true
+    dockerfilePath: apps/ingest/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    disk:
+      name: recordings
+      mountPath: /data/recordings
+      sizeGB: 5
+    envVars:
+      - key: DATA_DIR
+        value: /data/recordings
+      - key: LOG_LEVEL
+        value: info
+      # CORS allowlist for SSE + control API — set to your Vercel URL, e.g. https://your-app.vercel.app
+      - key: ALLOWED_ORIGIN
+        sync: false
+      # Render injects PORT automatically; ingest listens on 0.0.0.0:$PORT
