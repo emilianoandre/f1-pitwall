@@ -17,7 +17,6 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
 COPY package.json pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/types ./packages/types
 COPY apps/web ./apps/web
