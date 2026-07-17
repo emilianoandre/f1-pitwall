@@ -33,6 +33,9 @@ FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+# Docker sets HOSTNAME to the container ID; Next's standalone server binds to
+# it literally unless overridden, so traffic from outside the container can't reach it.
+ENV HOSTNAME="0.0.0.0"
 # Next standalone output bundles the server + minimal node_modules.
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
