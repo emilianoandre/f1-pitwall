@@ -49,21 +49,33 @@ async function login(): Promise<string> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/json",
       apiKey: API_KEY,
-      "User-Agent": "RaceControl f1viewer",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     },
     body: JSON.stringify({ Login: username, Password: password }),
   });
 
-  const body = (await res.body.json().catch(() => null)) as {
-    data?: { subscriptionToken?: string };
-    message?: string;
-  } | null;
+  // Read as text first — a WAF/bot-protection block page won't be JSON, and
+  // we want to see it rather than silently swallow it.
+  type LoginResponse = { data?: { subscriptionToken?: string }; message?: string };
+  const rawText = await res.body.text();
+  let parsed: LoginResponse | null = null;
+  try {
+    parsed = JSON.parse(rawText) as LoginResponse;
+  } catch {
+    // not JSON — likely a block page or plain-text error, fall through
+  }
 
-  const token = body?.data?.subscriptionToken;
+  const token = parsed?.data?.subscriptionToken;
   if (res.statusCode !== 200 || !token) {
+    const server = res.headers["server"] ?? (res.headers["x-akamai-request-id"] ? "akamai" : undefined);
+    const detail = parsed?.message ?? rawText.slice(0, 300).replace(/\s+/g, " ").trim();
     throw new Error(
-      `F1TV login failed: HTTP ${res.statusCode}${body?.message ? ` — ${body.message}` : ""}`,
+      `F1TV login failed: HTTP ${res.statusCode}` +
+        (server ? ` (server: ${server})` : "") +
+        (detail ? ` — ${detail}` : ""),
     );
   }
 
