@@ -19,6 +19,7 @@ interface BufferedEvent {
 export function useLiveConnection(): void {
   const setState = useLiveStore((s) => s.setState);
   const setConnected = useLiveStore((s) => s.setConnected);
+  const setFeedConnected = useLiveStore((s) => s.setFeedConnected);
   const setPlayer = useLiveStore((s) => s.setPlayer);
   const setMode = useLiveStore((s) => s.setMode);
 
@@ -37,6 +38,7 @@ export function useLiveConnection(): void {
       }
       // Mode + player status apply immediately (drive the UI chrome).
       setMode(event.mode);
+      setFeedConnected(event.connected);
       if ("player" in event) setPlayer(event.player ?? null);
       if (event.type === "player") {
         // No session data available (idle live feed, or player before its
@@ -69,5 +71,5 @@ export function useLiveConnection(): void {
       clearInterval(drain);
       es.close();
     };
-  }, [setState, setConnected, setPlayer, setMode]);
+  }, [setState, setConnected, setFeedConnected, setPlayer, setMode]);
 }

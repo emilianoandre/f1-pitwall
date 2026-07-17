@@ -5,7 +5,10 @@ import type { SessionState, PlayerStatus, IngestMode } from "@f1-dash/types";
 
 interface LiveStore {
   state: SessionState | null;
+  /** Whether the browser's own SSE connection to the app is open. */
   connected: boolean;
+  /** Whether ingest's upstream feed (F1TV in live mode) is connected. Always true in player mode. */
+  feedConnected: boolean;
   /** Broadcast-sync delay in ms (live mode only). */
   delayMs: number;
   lastAppliedTs: number | null;
@@ -22,6 +25,7 @@ interface LiveStore {
 
   setState: (state: SessionState | null, ts: number) => void;
   setConnected: (connected: boolean) => void;
+  setFeedConnected: (feedConnected: boolean) => void;
   setDelayMs: (delayMs: number) => void;
   setPlayer: (player: PlayerStatus | null) => void;
   setMode: (mode: IngestMode) => void;
@@ -32,6 +36,7 @@ interface LiveStore {
 export const useLiveStore = create<LiveStore>((set) => ({
   state: null,
   connected: false,
+  feedConnected: false,
   delayMs: 0,
   lastAppliedTs: null,
   mode: null,
@@ -40,6 +45,7 @@ export const useLiveStore = create<LiveStore>((set) => ({
   screen: "picker",
   setState: (state, ts) => set({ state, lastAppliedTs: ts }),
   setConnected: (connected) => set({ connected }),
+  setFeedConnected: (feedConnected) => set({ feedConnected }),
   setDelayMs: (delayMs) => set({ delayMs }),
   setPlayer: (player) => set({ player }),
   setMode: (mode) => set({ mode }),

@@ -89,10 +89,11 @@ export function buildServer(opts: ServerOptions): FastifyInstance {
       reply.raw.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
 
     const emitState = (type: "snapshot" | "update") => {
+      const connected = opts.isConnected();
       if (opts.stateSource.hasData()) {
-        send({ type, ts: Date.now(), state: opts.stateSource.getState(), player: playerStatus(), mode: opts.getMode() });
+        send({ type, ts: Date.now(), state: opts.stateSource.getState(), player: playerStatus(), mode: opts.getMode(), connected });
       } else {
-        send({ type: "player", ts: Date.now(), player: playerStatus(), mode: opts.getMode() });
+        send({ type: "player", ts: Date.now(), player: playerStatus(), mode: opts.getMode(), connected });
       }
     };
 

@@ -253,6 +253,8 @@ export interface SnapshotEvent {
   /** Present when the server is in player mode. */
   player?: PlayerStatus | null;
   mode: IngestMode;
+  /** True when the live feed's own upstream connection (to F1) is up; always true in player mode. */
+  connected: boolean;
 }
 
 export interface UpdateEvent {
@@ -261,6 +263,7 @@ export interface UpdateEvent {
   state: SessionState;
   player?: PlayerStatus | null;
   mode: IngestMode;
+  connected: boolean;
 }
 
 /** Sent when player/mode status changes but the session state hasn't (e.g. pause). */
@@ -269,6 +272,7 @@ export interface PlayerEvent {
   ts: number;
   player: PlayerStatus | null;
   mode: IngestMode;
+  connected: boolean;
 }
 
 export type SseEvent = SnapshotEvent | UpdateEvent | PlayerEvent;

@@ -24,7 +24,7 @@ function flagChip(status: TrackStatus | undefined) {
 
 export function TopBar() {
   const mode = useLiveStore((s) => s.mode);
-  const connected = useLiveStore((s) => s.connected);
+  const feedConnected = useLiveStore((s) => s.feedConnected);
   const session = useLiveStore((s) => s.state?.session);
   const trackStatus = useLiveStore((s) => s.state?.trackStatus);
   const setScreen = useLiveStore((s) => s.setScreen);
@@ -76,17 +76,27 @@ export function TopBar() {
       </div>
 
       {/* Live / Replay toggle */}
-      <div className="flex" style={{ background: F1.panel2, border: `1px solid ${F1.border}`, borderRadius: 1, padding: 4 }}>
-        <button style={seg(isLive)} onClick={() => void setIngestMode("live")}>
+      <div className="flex flex-col items-start" style={{ gap: 4 }}>
+        <div className="flex" style={{ background: F1.panel2, border: `1px solid ${F1.border}`, borderRadius: 1, padding: 4 }}>
+          <button style={seg(isLive)} onClick={() => void setIngestMode("live")}>
+            <span
+              className="f1-blink inline-block align-middle"
+              style={{ width: 7, height: 7, borderRadius: "50%", marginRight: 7, background: !isLive ? F1.muted2 : feedConnected ? F1.green : F1.amber }}
+            />
+            LIVE
+          </button>
+          <button style={seg(!isLive)} onClick={() => void setIngestMode("player")}>
+            REPLAY
+          </button>
+        </div>
+        {isLive && (
           <span
-            className="f1-blink inline-block align-middle"
-            style={{ width: 7, height: 7, borderRadius: "50%", marginRight: 7, background: isLive && connected ? F1.green : F1.muted2 }}
-          />
-          LIVE
-        </button>
-        <button style={seg(!isLive)} onClick={() => void setIngestMode("player")}>
-          REPLAY
-        </button>
+            className="f1-overline"
+            style={{ fontSize: 9.5, color: feedConnected ? F1.green : F1.amber, paddingLeft: 2 }}
+          >
+            {feedConnected ? "F1TV connected" : "F1TV disconnected"}
+          </span>
+        )}
       </div>
 
       <div className="ml-auto flex items-center gap-[14px]">
