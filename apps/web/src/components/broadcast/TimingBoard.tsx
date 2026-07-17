@@ -35,6 +35,14 @@ function Row({ num }: { num: string }) {
       <span style={{ width: 10, fontSize: 11, textAlign: "center", color: F1.muted2 }}>{d.pitOut ? "" : ""}</span>
       <span className="f1-mono" style={{ fontWeight: 700, fontSize: 13.5, width: 38 }}>{d.tla}</span>
       <span className="flex-1 min-w-0 truncate" style={{ fontSize: 12.5, color: F1.muted }}>{d.fullName}</span>
+      {d.bestLap.overallBest && (
+        <span
+          title="Fastest lap"
+          style={{ fontSize: 9, fontWeight: 700, color: F1.purple, border: `1px solid ${F1.purple}88`, borderRadius: 2, padding: "1px 4px" }}
+        >
+          FL
+        </span>
+      )}
       {d.carData?.drs && (
         <span style={{ fontSize: 9, fontWeight: 700, color: F1.green, border: `1px solid rgba(52,208,88,.5)`, borderRadius: 2, padding: "1px 4px" }}>DRS</span>
       )}

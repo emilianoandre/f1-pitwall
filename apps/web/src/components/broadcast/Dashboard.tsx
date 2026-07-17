@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useLiveStore } from "@/lib/liveStore";
 import { TopBar } from "./TopBar";
 import { Transport } from "./Transport";
@@ -11,6 +12,7 @@ import { TireStrategy } from "./TireStrategy";
 import { Weather } from "./Weather";
 import { RadioPanel } from "./RadioPanel";
 import { HeadToHead } from "./HeadToHead";
+import { MiniSectorsPanel } from "./MiniSectorsPanel";
 import { IdleView } from "@/components/IdleView";
 import { F1 } from "@/lib/design";
 
@@ -19,6 +21,7 @@ export function Dashboard() {
   const mode = useLiveStore((s) => s.mode);
   const recordingLoaded = useLiveStore((s) => s.player?.loaded ?? false);
   const setScreen = useLiveStore((s) => s.setScreen);
+  const [showMiniSectors, setShowMiniSectors] = useState(false);
 
   const showPanels = hasData || (mode === "player" && recordingLoaded);
 
@@ -28,23 +31,45 @@ export function Dashboard() {
       {mode === "player" && <Transport />}
 
       {showPanels ? (
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns: "minmax(0,1.32fr) minmax(0,1fr) 336px",
-            gridTemplateAreas: `"track track board" "tele timing board" "tire tire board" "weather radio h2h"`,
-            gap: 14,
-          }}
-        >
-          <TrackMapPanel />
-          <TimingBoard />
-          <Telemetry />
-          <SectorTimes />
-          <TireStrategy />
-          <Weather />
-          <RadioPanel />
-          <HeadToHead />
-        </div>
+        <>
+          <div className="flex justify-end" style={{ margin: "0 0 10px" }}>
+            <button
+              onClick={() => setShowMiniSectors((v) => !v)}
+              className="f1-overline"
+              style={{
+                cursor: "pointer",
+                fontSize: 10.5,
+                padding: "6px 12px",
+                borderRadius: 1,
+                border: `1px solid ${showMiniSectors ? F1.accent : F1.border2}`,
+                background: showMiniSectors ? "rgba(225,6,0,.14)" : "transparent",
+                color: showMiniSectors ? F1.accent2 : F1.muted,
+              }}
+            >
+              {showMiniSectors ? "Hide" : "Show"} standings & mini sectors
+            </button>
+          </div>
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: "minmax(0,1.32fr) minmax(0,1fr) 336px",
+              gridTemplateAreas: showMiniSectors
+                ? `"track track board" "extra extra board" "tele timing board" "tire tire board" "weather radio h2h"`
+                : `"track track board" "tele timing board" "tire tire board" "weather radio h2h"`,
+              gap: 14,
+            }}
+          >
+            <TrackMapPanel />
+            <TimingBoard />
+            {showMiniSectors && <MiniSectorsPanel />}
+            <Telemetry />
+            <SectorTimes />
+            <TireStrategy />
+            <Weather />
+            <RadioPanel />
+            <HeadToHead />
+          </div>
+        </>
       ) : mode === "live" ? (
         <IdleView />
       ) : (
