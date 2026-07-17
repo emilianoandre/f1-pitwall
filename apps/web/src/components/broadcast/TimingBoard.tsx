@@ -4,7 +4,7 @@ import { useLiveStore, useFocusNumber } from "@/lib/liveStore";
 import { F1, teamHex, contrastText, COMPOUND, timingColor, orDash } from "@/lib/design";
 import type { DriverState } from "@f1-dash/types";
 
-function Row({ num }: { num: string }) {
+function Row({ num, showBestLap }: { num: string; showBestLap: boolean }) {
   const d = useLiveStore((s) => s.state?.drivers[num]);
   const focus = useFocusNumber();
   const setFocus = useLiveStore((s) => s.setFocus);
@@ -58,8 +58,8 @@ function Row({ num }: { num: string }) {
       <span className="f1-mono text-right" style={{ width: 56, fontSize: 12, color: intColor }}>
         {statusOrInterval(d)}
       </span>
-      <span className="f1-mono text-right" style={{ width: 56, fontSize: 12, color: timingColor(d.lastLap) }}>
-        {orDash(d.lastLap.value)}
+      <span className="f1-mono text-right" style={{ width: 56, fontSize: 12, color: timingColor(showBestLap ? d.bestLap : d.lastLap) }}>
+        {orDash(showBestLap ? d.bestLap.value : d.lastLap.value)}
       </span>
     </div>
   );
@@ -73,6 +73,8 @@ function statusOrInterval(d: DriverState): string {
 
 export function TimingBoard() {
   const order = useLiveStore((s) => s.state?.order) ?? [];
+  const sessionType = useLiveStore((s) => s.state?.session.type);
+  const showBestLap = sessionType === "Practice" || sessionType === "Qualifying";
 
   return (
     <div className="f1-panel flex flex-col overflow-hidden" style={{ gridArea: "board" }}>
@@ -83,7 +85,7 @@ export function TimingBoard() {
         <span className="f1-cond" style={{ fontWeight: 500, fontSize: 15 }}>Live Timing</span>
         <div className="flex gap-[14px] f1-overline" style={{ fontSize: 9.5 }}>
           <span style={{ width: 56, textAlign: "right" }}>INTERVAL</span>
-          <span style={{ width: 56, textAlign: "right" }}>LAST LAP</span>
+          <span style={{ width: 56, textAlign: "right" }}>{showBestLap ? "BEST LAP" : "LAST LAP"}</span>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
@@ -92,7 +94,7 @@ export function TimingBoard() {
             Waiting for timing…
           </div>
         ) : (
-          order.map((num) => <Row key={num} num={num} />)
+          order.map((num) => <Row key={num} num={num} showBestLap={showBestLap} />)
         )}
       </div>
     </div>

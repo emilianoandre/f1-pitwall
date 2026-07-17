@@ -266,11 +266,25 @@ export function buildSessionState(rawState: Any, derived: DerivedData): SessionS
     };
   }
 
+  const session = buildSession(raw);
+
+  // Practice has no knockout segments, so "fastest lap wins" is unambiguous
+  // and we can rank on it directly. Qualifying does have segments (Q1/Q2/Q3)
+  // — the feed's own "Line" field already ranks Q3 finishers above Q2/Q1
+  // eliminees correctly, which a flat sort on raw lap time would break
+  // whenever an eliminated driver's earlier-segment time is numerically
+  // faster than a later-segment finisher's time. Race/Sprint also keep Line.
+  const rankByBestLap = session.type === "Practice";
   const order = Object.values(drivers)
-    .sort((a, b) => (a.line || 99) - (b.line || 99))
+    .sort((a, b) => {
+      if (rankByBestLap) {
+        const diff = (a.bestLap.ms ?? Infinity) - (b.bestLap.ms ?? Infinity);
+        if (diff !== 0) return diff;
+      }
+      return (a.line || 99) - (b.line || 99);
+    })
     .map((d) => d.racingNumber);
 
-  const session = buildSession(raw);
   const battles = session.type === "Race" ? computeBattles(drivers, order) : [];
   const qualifyingCutoff = computeQualifyingCutoff(session, obj(raw.TimingData));
 
