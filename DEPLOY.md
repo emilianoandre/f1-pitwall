@@ -1,100 +1,111 @@
 # Deployment
 
-This app has **two** deployable pieces with different hosting needs:
+Both parts of the app run on **Railway**, as two services in the same project,
+both built from this repo's Dockerfiles:
 
-| Part | What it is | Where it can run |
-|------|------------|------------------|
-| `apps/web` | Next.js frontend + two cached proxy routes | **Vercel** (or any Next.js host) |
-| `apps/ingest` | Long-running SSE server: holds a WebSocket to F1, in-memory session state, and the seekable player | **A container/VM host** — *not* Vercel |
+| Service | What it is | Dockerfile |
+|---------|------------|------------|
+| `f1-web` | Next.js frontend + two cached proxy routes | `apps/web/Dockerfile` |
+| `f1-ingest` | Long-running SSE server: holds a WebSocket to F1, in-memory session state, and the seekable player | `apps/ingest/Dockerfile` |
 
-> **Why ingest isn't on Vercel:** Vercel runs short-lived, stateless serverless
-> functions. The ingest service holds a persistent SignalR WebSocket to F1,
-> keeps merged race state and a loaded recording (tens of MB) in memory, and
-> streams SSE for the life of a session. That's a stateful long-running server,
-> which the serverless model can't host. So the frontend goes on Vercel and the
-> ingest runs as an always-on container elsewhere.
+> **Why ingest needs a long-running container:** it holds a persistent
+> WebSocket to F1, keeps merged race state and a loaded recording (tens of MB)
+> in memory, and streams SSE for the life of a session. That rules out
+> stateless serverless hosting — it needs an always-on container, which is
+> why both services live on Railway rather than splitting across a serverless
+> frontend host and a separate container host.
 
-The browser talks to the ingest service **directly** (for the SSE stream and
-player controls), so the ingest just needs a public URL and CORS pointed at your
-Vercel domain.
+The browser talks to `f1-ingest` **directly** (for the SSE stream and player
+controls), so it just needs a public URL and CORS pointed at the `f1-web`
+domain.
 
 ---
 
-## 1. Deploy the frontend to Vercel
+## Repo-level config
 
-1. Push the repo to GitHub/GitLab/Bitbucket.
-2. In Vercel, **New Project → import the repo**.
-3. Set **Root Directory** to `apps/web`. Vercel detects Next.js and reads
-   `apps/web/vercel.json` (install/build commands are already set for the pnpm
-   workspace). If Vercel asks, enable *"Include files outside the root directory"*
-   so the `@f1-dash/types` workspace package is available at build time.
-4. Add an **Environment Variable**:
-   - `NEXT_PUBLIC_INGEST_URL` = the public URL of your ingest service
-     (e.g. `https://f1-ingest.up.railway.app`) — see step 2.
-   > This is a `NEXT_PUBLIC_*` var, so it's baked into the client bundle at build
-   > time. If you change it later, **redeploy** for it to take effect.
-5. Deploy. Note your Vercel URL (e.g. `https://your-app.vercel.app`).
+Railway's Railpack builder can't auto-detect a start command in this pnpm
+monorepo, so both services build via Docker instead. This is configured with:
 
-You can deploy the frontend before the ingest exists — it will just show the
-schedule / "no live session" idle view until `NEXT_PUBLIC_INGEST_URL` points at a
-running ingest.
+- **`railway.json`** (repo root) — `"build": { "builder": "DOCKERFILE" }`,
+  shared by both services.
+- **`RAILWAY_DOCKERFILE_PATH`** — a per-service variable pointing each service
+  at its own Dockerfile (`apps/web/Dockerfile` / `apps/ingest/Dockerfile`).
+  Both Dockerfiles use the repo root as build context, so they can `COPY`
+  workspace files like `pnpm-workspace.yaml` and `packages/types`.
 
-## 2. Deploy the ingest service (a container host)
+## Setting up a service from scratch
 
-The ingest ships a production `Dockerfile` (`apps/ingest/Dockerfile`, build
-context = repo root). Any Docker-capable host works — Railway, Render, Fly.io,
-a VPS, etc. Configure:
+1. `railway add --repo <owner>/<repo> --branch main --service <name>` — links
+   a new service to this repo.
+2. Set `RAILWAY_DOCKERFILE_PATH=apps/web/Dockerfile` (or `apps/ingest/...`) as
+   a service variable.
+3. `railway domain --service <name> --port <PORT>` — generates a public
+   domain. **The port must match what the container actually listens on**,
+   not just what the Dockerfile's `ENV PORT` says — see gotcha below.
+4. Set the remaining env vars (below), then `railway redeploy`.
 
-- **Build**: from `apps/ingest/Dockerfile` with build context = repo root.
-- **Env vars** (see `apps/ingest/.env.example`):
-  - `PORT` — the port the platform expects (many set this automatically).
-  - `ALLOWED_ORIGIN` = your Vercel URL, e.g. `https://your-app.vercel.app`
-    (this is the CORS allowlist for the SSE stream + control API).
-  - `DATA_DIR` = `/data/recordings` (mount a volume here to persist downloaded
-    sessions across restarts; optional — they re-download on demand).
-- **Expose** the port publicly and copy that URL into the web app's
-  `NEXT_PUBLIC_INGEST_URL`, then redeploy the web app.
+## Environment variables
 
-Example with Docker directly:
+**`f1-web`:**
+- `RAILWAY_DOCKERFILE_PATH` = `apps/web/Dockerfile`
+- `NEXT_PUBLIC_INGEST_URL` = the `f1-ingest` public URL. This is a
+  `NEXT_PUBLIC_*` var baked into the client bundle at **build** time (Railway
+  passes it through as a Docker build ARG automatically) — changing it
+  requires a rebuild, not just a restart.
 
-```bash
-docker build -f apps/ingest/Dockerfile -t f1-ingest .
-docker run -p 4000:4000 \
-  -e ALLOWED_ORIGIN=https://your-app.vercel.app \
-  -e DATA_DIR=/data/recordings \
-  -v $(pwd)/data/recordings:/data/recordings \
-  f1-ingest
+**`f1-ingest`:**
+- `RAILWAY_DOCKERFILE_PATH` = `apps/ingest/Dockerfile`
+- `ALLOWED_ORIGIN` = the `f1-web` public URL (CORS allowlist for the SSE
+  stream + control API)
+- `DATA_DIR` = `/data/recordings`, with a volume mounted there to persist
+  downloaded sessions across restarts
+- `LOG_LEVEL` = `info`
+
+The ingest starts in **player mode** (users pick sessions from the UI). To run
+it permanently connected to the live feed instead, set the container command
+to `pnpm exec tsx src/main.ts --live`.
+
+## Gotchas hit during setup
+
+- **Railpack can't find a start command** in this monorepo → force the
+  Dockerfile builder (see "Repo-level config" above) rather than relying on
+  auto-detect.
+- **`apps/web/Dockerfile` copying `packages/types/node_modules`**: that
+  package has zero dependencies, so pnpm never creates a `node_modules` dir
+  for it — don't `COPY` it from the deps stage.
+- **Next.js standalone server binds to the wrong host.** Docker sets the
+  `HOSTNAME` env var to the container ID, and Next's standalone `server.js`
+  binds to `process.env.HOSTNAME` literally instead of `0.0.0.0`. Traffic from
+  Railway's edge proxy can't reach a server bound to the container ID, which
+  shows up as a 502 with an otherwise-healthy, running deployment. Fix:
+  `ENV HOSTNAME="0.0.0.0"` in the runner stage.
+- **Railway injects its own `PORT`**, which can differ from the Dockerfile's
+  `ENV PORT` default. Check the actual port from `railway logs` (Next prints
+  `Network: http://0.0.0.0:<port>` on boot) and make sure the service's public
+  domain (`railway domain update <domain> --port <port>`) targets that same
+  port — a mismatch also presents as a 502 on an otherwise-successful deploy.
+
+## Wiring diagram
+
 ```
-
-The ingest starts in **player mode** (users pick sessions from the UI). To run it
-permanently connected to the live feed instead, set the container command to
-`pnpm exec tsx src/main.ts --live`.
-
-## 3. Wire them together
-
-```
-Browser ──HTTPS──▶ Vercel (apps/web)         static UI + /api/circuit, /api/schedule
+Browser ──HTTPS──▶ f1-web (apps/web)            static UI + /api/circuit, /api/schedule
    │
-   └────SSE / POST──▶ ingest host (apps/ingest)   NEXT_PUBLIC_INGEST_URL
+   └────SSE / POST──▶ f1-ingest (apps/ingest)    NEXT_PUBLIC_INGEST_URL
                           │
                           └──▶ F1 live timing feed / static archive
 ```
 
 Checklist:
-- [ ] `NEXT_PUBLIC_INGEST_URL` on Vercel = ingest public URL (then redeploy web)
-- [ ] `ALLOWED_ORIGIN` on ingest = Vercel URL
+- [ ] `NEXT_PUBLIC_INGEST_URL` on `f1-web` = `f1-ingest` public URL (rebuild after changing)
+- [ ] `ALLOWED_ORIGIN` on `f1-ingest` = `f1-web` public URL
+- [ ] Both domains' target ports match what the container actually listens on
 - [ ] Both use `https://` in production (mixed content is blocked otherwise)
 
 ## Notes & caveats
 
-- **HTTPS both sides.** A Vercel (https) page cannot open an SSE stream to an
-  `http://` ingest — the browser blocks it. Make sure the ingest host serves TLS.
+- **HTTPS both sides.** An `https://` page cannot open an SSE stream to an
+  `http://` ingest — the browser blocks it. Railway domains are TLS by default.
 - **Team radio audio** is fetched by the browser directly from
   `livetiming.formula1.com` (unaffected by where you host).
-- **Docker compose** (`docker-compose.yml`) runs both parts together for local /
-  single-box hosting; it has not been executed end-to-end in the build
-  environment (no Docker there), but the Dockerfile paths are validated against
-  the real build output.
-- **All-Vercel is not possible** without re-architecting the player to run in the
-  browser and dropping live mode (or fronting it with an external realtime
-  service). The split above is the intended production shape.
+- **Docker compose** (`docker-compose.yml`) runs both parts together for local
+  development.
