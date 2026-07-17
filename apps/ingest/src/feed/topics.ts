@@ -37,6 +37,13 @@ export const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+// A real browser connecting from F1TV sends these automatically; our
+// server-side client doesn't unless we set them explicitly. Premium topics
+// (CarData/Position) may be origin-gated even when the account is fully
+// entitled — this is a best-effort attempt to look like that connection.
+export const ORIGIN = "https://f1tv.formula1.com";
+export const REFERER = "https://f1tv.formula1.com/";
+
 /** Strip a trailing ".z" so compressed topics are emitted under their base name. */
 export function normalizeTopic(topic: string): string {
   return topic.endsWith(".z") ? topic.slice(0, -2) : topic;

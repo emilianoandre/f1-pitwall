@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import { request } from "undici";
-import { NEGOTIATE_URL, WS_URL, USER_AGENT, TOPICS } from "./topics.js";
+import { NEGOTIATE_URL, WS_URL, USER_AGENT, ORIGIN, REFERER, TOPICS } from "./topics.js";
 import { RECORD_SEPARATOR, parseFrames, routeFrame } from "./parse.js";
 import { getAccessToken } from "./auth.js";
 import type { FeedCallbacks, FeedHandle } from "./source.js";
@@ -21,7 +21,7 @@ export async function negotiate(): Promise<Negotiation> {
   // follows land on the same backend node.
   const pre = await request(NEGOTIATE_URL, {
     method: "OPTIONS",
-    headers: { "User-Agent": USER_AGENT },
+    headers: { "User-Agent": USER_AGENT, Origin: ORIGIN, Referer: REFERER },
   });
   const cookie = extractCookie(pre.headers["set-cookie"], "AWSALBCORS");
 
@@ -29,6 +29,8 @@ export async function negotiate(): Promise<Negotiation> {
     method: "POST",
     headers: {
       "User-Agent": USER_AGENT,
+      Origin: ORIGIN,
+      Referer: REFERER,
       Authorization: `Bearer ${accessToken}`,
       ...(cookie ? { Cookie: cookie } : {}),
     },
@@ -64,6 +66,7 @@ export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
   const ws = new WebSocket(url, {
     headers: {
       "User-Agent": USER_AGENT,
+      Origin: ORIGIN,
       ...(neg.cookie ? { Cookie: neg.cookie } : {}),
     },
   });
