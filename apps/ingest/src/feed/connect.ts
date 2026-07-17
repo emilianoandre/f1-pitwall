@@ -34,11 +34,13 @@ export async function negotiate(): Promise<Negotiation> {
     },
   });
 
+  const rawText = await res.body.text();
   if (res.statusCode !== 200) {
-    throw new Error(`negotiate failed: HTTP ${res.statusCode}`);
+    const detail = rawText.slice(0, 300).replace(/\s+/g, " ").trim();
+    throw new Error(`negotiate failed: HTTP ${res.statusCode}${detail ? ` — ${detail}` : ""}`);
   }
 
-  const body = (await res.body.json()) as {
+  const body = JSON.parse(rawText) as {
     connectionId?: string;
     connectionToken?: string;
   };

@@ -72,4 +72,15 @@ describe("getAccessToken", () => {
     process.env.F1_SUBSCRIPTION_TOKEN = fakeJwt(Math.floor(Date.now() / 1000) - 3600);
     await expect(getAccessToken()).rejects.toThrow(/expired/i);
   });
+
+  it("strips stray whitespace/quotes/newlines from a pasted token", async () => {
+    const token = fakeJwt(Math.floor(Date.now() / 1000) + 3600);
+    process.env.F1_SUBSCRIPTION_TOKEN = `  "${token}"\n`;
+    await expect(getAccessToken()).resolves.toBe(token);
+  });
+
+  it("rejects a token that still isn't a 3-part JWT after sanitizing", async () => {
+    process.env.F1_SUBSCRIPTION_TOKEN = "not-a-jwt";
+    await expect(getAccessToken()).rejects.toThrow(/doesn't look like a valid JWT/);
+  });
 });

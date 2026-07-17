@@ -53,7 +53,23 @@ function resolveToken(): Promise<string> {
   return manual ? Promise.resolve(useManualToken(manual)) : login();
 }
 
-function useManualToken(token: string): string {
+/**
+ * A JWT is only `[A-Za-z0-9_-]` segments joined by `.` — strip anything else
+ * (quotes, whitespace, a trailing newline from copy-paste) so a slightly
+ * messy paste into an env var doesn't produce an invalid HTTP header value.
+ */
+function sanitizeToken(raw: string): string {
+  return raw.replace(/[^A-Za-z0-9_.-]/g, "");
+}
+
+function useManualToken(rawToken: string): string {
+  const token = sanitizeToken(rawToken);
+  if (!token || token.split(".").length !== 3) {
+    throw new Error(
+      "F1_SUBSCRIPTION_TOKEN doesn't look like a valid JWT after removing whitespace/quotes " +
+        "— make sure you pasted only the subscriptionToken value, not the whole JSON response",
+    );
+  }
   const expiresAt = expiryFromJwt(token);
   if (expiresAt <= Date.now()) {
     throw new Error(
