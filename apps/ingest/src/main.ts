@@ -4,9 +4,9 @@
 //   pnpm --filter @f1-dash/ingest dev -- --live       (starts connected to the feed)
 //   pnpm --filter @f1-dash/ingest dev -- --load <id>  (auto-load a recording)
 //
-// Env: PORT, ALLOWED_ORIGIN, DATA_DIR, LOG_LEVEL, F1TV_USERNAME, F1TV_PASSWORD,
+// Env: PORT, ALLOWED_ORIGIN, DATA_DIR, LOG_LEVEL, F1_USERNAME, F1_PASSWORD,
 // INGEST_SHARED_SECRET.
-// F1TV_USERNAME/F1TV_PASSWORD are only needed for live mode (see feed/auth.ts) —
+// F1_USERNAME/F1_PASSWORD are only needed for live mode (see feed/auth.ts) —
 // F1 requires an F1TV login to access the live timing feed.
 // INGEST_SHARED_SECRET, if set, must match the web app's proxy on every request
 // except /api/health — see server.ts.

@@ -11,8 +11,8 @@ services:
       DATA_DIR: "/data/recordings"
       LOG_LEVEL: "info"
       # Required for live mode only — see apps/ingest/.env.example.
-      # F1TV_USERNAME: ""
-      # F1TV_PASSWORD: ""
+      # F1_USERNAME: ""
+      # F1_PASSWORD: ""
       # Must match the web service's INGEST_SHARED_SECRET if you set one.
       # INGEST_SHARED_SECRET: ""
     volumes:

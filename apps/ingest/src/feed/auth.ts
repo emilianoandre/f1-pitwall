@@ -19,7 +19,7 @@ let inflight: Promise<string> | null = null;
 
 /** True if F1TV credentials are configured — the live feed requires them. */
 export function hasF1tvCredentials(): boolean {
-  return Boolean(process.env.F1TV_USERNAME && process.env.F1TV_PASSWORD);
+  return Boolean(process.env.F1_USERNAME && process.env.F1_PASSWORD);
 }
 
 /**
@@ -37,11 +37,11 @@ export async function getAccessToken(): Promise<string> {
 }
 
 async function login(): Promise<string> {
-  const username = process.env.F1TV_USERNAME;
-  const password = process.env.F1TV_PASSWORD;
+  const username = process.env.F1_USERNAME;
+  const password = process.env.F1_PASSWORD;
   if (!username || !password) {
     throw new Error(
-      "F1TV_USERNAME/F1TV_PASSWORD are not set — the live timing feed requires an F1TV login",
+      "F1_USERNAME/F1_PASSWORD are not set — the live timing feed requires an F1TV login",
     );
   }
 
