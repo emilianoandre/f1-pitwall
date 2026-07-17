@@ -15,9 +15,12 @@ both built from this repo's Dockerfiles:
 > why both services live on Railway rather than splitting across a serverless
 > frontend host and a separate container host.
 
-The browser talks to `f1-ingest` **directly** (for the SSE stream and player
-controls), so it just needs a public URL and CORS pointed at the `f1-web`
-domain.
+The browser never talks to `f1-ingest` directly — `f1-web`'s
+`/api/ingest/[...path]` route proxies both the SSE stream and the player
+control API server-side, so everything the browser touches is same-origin.
+This also means the app-wide login gate (below) actually protects the live
+data, rather than just the page shell — `f1-ingest`'s own public URL isn't a
+back door around it (see `INGEST_SHARED_SECRET` below).
 
 ---
 
@@ -48,24 +51,35 @@ monorepo, so both services build via Docker instead. This is configured with:
 
 **`f1-web`:**
 - `RAILWAY_DOCKERFILE_PATH` = `apps/web/Dockerfile`
-- `NEXT_PUBLIC_INGEST_URL` = the `f1-ingest` public URL. This is a
-  `NEXT_PUBLIC_*` var baked into the client bundle at **build** time (Railway
-  passes it through as a Docker build ARG automatically) — changing it
-  requires a rebuild, not just a restart.
+- `INGEST_URL` = the `f1-ingest` **public** URL, server-only (used by the
+  `/api/ingest` proxy). `NEXT_PUBLIC_INGEST_URL` still works as a fallback
+  but nothing in the browser bundle reads it anymore.
+- `APP_USERNAME` / `APP_PASSWORD` / `AUTH_SECRET` — the login gate (see
+  `src/middleware.ts`). Leave all three unset to run without a login (e.g.
+  local dev). `AUTH_SECRET` signs the session cookie — generate with
+  `openssl rand -base64 32`.
+- `INGEST_SHARED_SECRET` — sent as `x-internal-token` on every proxied
+  request to `f1-ingest`; must match the same variable there.
+- Set the credential/secret variables directly in the Railway dashboard's
+  Variables tab rather than via the CLI, so passwords/secrets never pass
+  through a terminal/chat history.
 
 **`f1-ingest`:**
 - `RAILWAY_DOCKERFILE_PATH` = `apps/ingest/Dockerfile`
-- `ALLOWED_ORIGIN` = the `f1-web` public URL (CORS allowlist for the SSE
-  stream + control API)
+- `ALLOWED_ORIGIN` = the `f1-web` public URL (CORS is mostly vestigial now
+  that the browser only reaches ingest through `f1-web`'s proxy, but harmless
+  to leave set)
 - `DATA_DIR` = `/data/recordings`, with a volume mounted there to persist
   downloaded sessions across restarts
 - `LOG_LEVEL` = `info`
 - `F1TV_USERNAME` / `F1TV_PASSWORD` — an F1TV subscriber login, required for
   **live** mode only (player/replay mode doesn't touch the live feed). F1
   closed unauthenticated access to the live timing feed in 2026; see
-  `apps/ingest/src/feed/auth.ts`. Set these directly in the Railway
-  dashboard's Variables tab rather than via the CLI, so the password never
-  passes through a terminal/chat history.
+  `apps/ingest/src/feed/auth.ts`.
+- `INGEST_SHARED_SECRET` — must match `f1-web`'s value. If set, every
+  request except `/api/health` must carry it, which is what makes `f1-web`'s
+  login gate actually mean something instead of being bypassable by hitting
+  ingest's own URL.
 
 The ingest starts in **player mode** (users pick sessions from the UI). To run
 it permanently connected to the live feed instead, set the container command
@@ -94,15 +108,17 @@ to `pnpm exec tsx src/main.ts --live`.
 ## Wiring diagram
 
 ```
-Browser ──HTTPS──▶ f1-web (apps/web)            static UI + /api/circuit, /api/schedule
-   │
-   └────SSE / POST──▶ f1-ingest (apps/ingest)    NEXT_PUBLIC_INGEST_URL
-                          │
-                          └──▶ F1 live timing feed / static archive
+Browser ──HTTPS──▶ f1-web (apps/web)             login gate, static UI, /api/circuit, /api/schedule
+                       │
+                       └──/api/ingest/*──▶ f1-ingest (apps/ingest)    INGEST_URL + x-internal-token
+                                              │
+                                              └──▶ F1 live timing feed / static archive
 ```
 
 Checklist:
-- [ ] `NEXT_PUBLIC_INGEST_URL` on `f1-web` = `f1-ingest` public URL (rebuild after changing)
+- [ ] `INGEST_URL` on `f1-web` = `f1-ingest` public URL
+- [ ] `INGEST_SHARED_SECRET` matches on both services
+- [ ] `APP_USERNAME` / `APP_PASSWORD` / `AUTH_SECRET` set on `f1-web` if you want the login gate
 - [ ] `ALLOWED_ORIGIN` on `f1-ingest` = `f1-web` public URL
 - [ ] Both domains' target ports match what the container actually listens on
 - [ ] Both use `https://` in production (mixed content is blocked otherwise)

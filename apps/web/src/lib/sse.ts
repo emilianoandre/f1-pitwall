@@ -4,9 +4,6 @@ import { useEffect } from "react";
 import type { SseEvent } from "@f1-dash/types";
 import { useLiveStore } from "./liveStore";
 
-export const INGEST_URL =
-  process.env.NEXT_PUBLIC_INGEST_URL ?? "http://localhost:4000";
-
 interface BufferedEvent {
   ts: number;
   arrivedAt: number;
@@ -27,7 +24,9 @@ export function useLiveConnection(): void {
 
   useEffect(() => {
     const buffer: BufferedEvent[] = [];
-    const es = new EventSource(`${INGEST_URL}/api/sse`);
+    // Same-origin proxy (/api/ingest/sse) — avoids CORS and keeps the stream
+    // behind the app's own login gate instead of hitting ingest directly.
+    const es = new EventSource("/api/ingest/sse");
 
     const handle = (raw: string) => {
       let event: SseEvent;

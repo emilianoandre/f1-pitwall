@@ -28,6 +28,8 @@ interface ServerOptions {
   log?: (msg: string) => void;
   player: Player;
   registry: RecordingRegistry;
+  /** If set, every request except /api/health must carry this in x-internal-token. */
+  internalToken?: string;
 }
 
 const IMMEDIATE_TOPICS = new Set(["TrackStatus", "RaceControlMessages"]);
@@ -38,6 +40,20 @@ export function buildServer(opts: ServerOptions): FastifyInstance {
   const log = opts.log ?? (() => {});
 
   void app.register(cors, { origin: opts.allowedOrigin });
+
+  // The app's web frontend is the only intended caller (via its /api/ingest
+  // proxy, itself behind a login) — this stops the ingest's own public URL
+  // from being a way to bypass that login. /api/health stays open for the
+  // platform's own health checks, which don't send custom headers.
+  if (opts.internalToken) {
+    const token = opts.internalToken;
+    app.addHook("onRequest", async (req, reply) => {
+      if (req.url.startsWith("/api/health")) return;
+      if (req.headers["x-internal-token"] !== token) {
+        return reply.status(401).send({ error: "unauthorized" });
+      }
+    });
+  }
 
   // Player status only makes sense in player mode.
   const playerStatus = (): PlayerStatus | null =>

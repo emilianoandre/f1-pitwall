@@ -10,6 +10,11 @@ services:
       ALLOWED_ORIGIN: "http://localhost:3000"
       DATA_DIR: "/data/recordings"
       LOG_LEVEL: "info"
+      # Required for live mode only — see apps/ingest/.env.example.
+      # F1TV_USERNAME: ""
+      # F1TV_PASSWORD: ""
+      # Must match the web service's INGEST_SHARED_SECRET if you set one.
+      # INGEST_SHARED_SECRET: ""
     volumes:
       # Persists downloaded session recordings across container rebuilds.
       - ./data/recordings:/data/recordings
@@ -24,12 +29,20 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args:
-        # Baked into the client bundle at build time. For a real deploy set this
-        # to the ingest service's public URL.
-        NEXT_PUBLIC_INGEST_URL: "http://localhost:4000"
     ports:
       - "3000:3000"
+    environment:
+      # Server-only — the /api/ingest proxy forwards both REST calls and the
+      # SSE stream to this, so nothing ingest-related reaches the browser
+      # directly. Uses the compose service name for container-to-container
+      # networking.
+      INGEST_URL: "http://ingest:4000"
+      # Must match ingest's INGEST_SHARED_SECRET if you set one there.
+      # INGEST_SHARED_SECRET: ""
+      # Set all three to require a login (see apps/web/.env.example).
+      # APP_USERNAME: ""
+      # APP_PASSWORD: ""
+      # AUTH_SECRET: ""
     depends_on:
       - ingest
     restart: unless-stopped
