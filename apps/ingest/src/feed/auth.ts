@@ -1,9 +1,17 @@
 import { request } from "undici";
 
 // F1 closed unauthenticated access to the live timing feed in 2026 — it now
-// requires an F1TV subscription token, obtained the same way the official
-// F1TV app does (and the way third-party clients like f1viewer reverse
-// engineered): log in with a subscriber's username/password.
+// requires an F1TV subscription token.
+//
+// The programmatic login below (the same endpoint F1TV's own app and
+// third-party clients like f1viewer use) gets blocked by Akamai bot
+// detection when called from a cloud/datacenter IP — it returns a "Pardon
+// Our Interruption" challenge page before ever checking the password.
+// There's no clean server-side fix for that, so F1_SUBSCRIPTION_TOKEN lets
+// you sidestep it: log into F1TV in a real browser (residential IP, no bot
+// check), pull the resulting subscription token, and set it directly. It's
+// a JWT valid for about a week; since it was obtained manually there's no
+// way to auto-renew it, so you'll need to refresh it periodically.
 const AUTH_URL = "https://api.formula1.com/v2/account/subscriber/authenticate/by-password";
 // Public client API key used by open-source F1TV clients (f1viewer, MultiViewer).
 // Not a secret — it identifies the client application, not the account.
@@ -17,23 +25,44 @@ interface CachedToken {
 let cached: CachedToken | null = null;
 let inflight: Promise<string> | null = null;
 
-/** True if F1TV credentials are configured — the live feed requires them. */
+/** True if some way of getting an F1TV token is configured — the live feed requires one. */
 export function hasF1tvCredentials(): boolean {
-  return Boolean(process.env.F1_USERNAME && process.env.F1_PASSWORD);
+  return Boolean(
+    process.env.F1_SUBSCRIPTION_TOKEN || (process.env.F1_USERNAME && process.env.F1_PASSWORD),
+  );
 }
 
 /**
- * Get a cached F1TV subscription token, logging in (or refreshing) as needed.
- * Concurrent callers during a refresh share the same in-flight login request.
+ * Get a cached F1TV subscription token: a manually-provided
+ * F1_SUBSCRIPTION_TOKEN if set, otherwise a fresh username/password login
+ * (blocked from most cloud hosts — see the module comment above).
+ * Concurrent callers during a refresh share the same in-flight resolution.
  */
 export async function getAccessToken(): Promise<string> {
   if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token;
   if (!inflight) {
-    inflight = login().finally(() => {
+    inflight = resolveToken().finally(() => {
       inflight = null;
     });
   }
   return inflight;
+}
+
+function resolveToken(): Promise<string> {
+  const manual = process.env.F1_SUBSCRIPTION_TOKEN;
+  return manual ? Promise.resolve(useManualToken(manual)) : login();
+}
+
+function useManualToken(token: string): string {
+  const expiresAt = expiryFromJwt(token);
+  if (expiresAt <= Date.now()) {
+    throw new Error(
+      "F1_SUBSCRIPTION_TOKEN has expired — log into F1TV in a browser again and set a fresh one " +
+        "(a manually-obtained token can't be auto-renewed)",
+    );
+  }
+  cached = { token, expiresAt };
+  return token;
 }
 
 async function login(): Promise<string> {

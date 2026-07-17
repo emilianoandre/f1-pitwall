@@ -72,10 +72,19 @@ monorepo, so both services build via Docker instead. This is configured with:
 - `DATA_DIR` = `/data/recordings`, with a volume mounted there to persist
   downloaded sessions across restarts
 - `LOG_LEVEL` = `info`
-- `F1_USERNAME` / `F1_PASSWORD` — an F1TV subscriber login, required for
-  **live** mode only (player/replay mode doesn't touch the live feed). F1
-  closed unauthenticated access to the live timing feed in 2026; see
-  `apps/ingest/src/feed/auth.ts`.
+- Live mode needs an F1TV token — required for **live** mode only
+  (player/replay mode doesn't touch the live feed). F1 closed unauthenticated
+  access to the live timing feed in 2026; see `apps/ingest/src/feed/auth.ts`.
+  - `F1_USERNAME` / `F1_PASSWORD` log in programmatically, but this is
+    **blocked by Akamai bot detection on Railway** (and most cloud hosts) —
+    it returns a "Pardon Our Interruption" page before even checking the
+    password.
+  - `F1_SUBSCRIPTION_TOKEN` is the working alternative: log into F1TV in a
+    real browser (residential IP, so no bot check), pull the resulting
+    subscription token from the network tab or cookies, and set it here
+    directly. It's a JWT valid for about a week and has to be refreshed
+    manually — there's no way to auto-renew a token that was obtained
+    outside the app.
 - `INGEST_SHARED_SECRET` — must match `f1-web`'s value. If set, every
   request except `/api/health` must carry it, which is what makes `f1-web`'s
   login gate actually mean something instead of being bypassable by hitting
