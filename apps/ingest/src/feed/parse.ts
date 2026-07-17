@@ -53,13 +53,27 @@ export function routeFrame(
 
   const completion = frame as CompletionFrame;
   if (completion.type === 3 && completion.result && typeof completion.result === "object") {
+    // Diagnostic: which topics the server actually included in the Subscribe
+    // reply, so we can tell "never granted" apart from "granted but the
+    // ongoing stream never arrives".
+    // eslint-disable-next-line no-console
+    console.log(`[feed] Subscribe reply topics: ${Object.keys(completion.result).join(", ")}`);
     onSnapshot(decodeSnapshot(completion.result));
     return;
   }
 
   const invocation = frame as InvocationFrame;
   if (invocation.type === 1 && Array.isArray(invocation.arguments)) {
-    for (const [topic, data, ts] of extractTuples(invocation.arguments)) {
+    const tuples = extractTuples(invocation.arguments);
+    if (tuples.length === 0 && invocation.arguments.length > 0) {
+      // Diagnostic: an invocation arrived but didn't match the [topic, data,
+      // utc] shape we expect — would otherwise vanish silently.
+      warnOnceRaw(
+        `unrecognized invocation shape (target=${invocation.target ?? "?"}): ` +
+          JSON.stringify(invocation.arguments).slice(0, 200),
+      );
+    }
+    for (const [topic, data, ts] of tuples) {
       onMessage(normalizeTopic(topic), decodePayload(topic, data), ts);
     }
   }
@@ -95,6 +109,14 @@ function warnOnce(topic: string, msg: string): void {
   warnedTopics.add(topic);
   // eslint-disable-next-line no-console
   console.warn(`[feed] ${topic}: ${msg}`);
+}
+
+const warnedRaw = new Set<string>();
+function warnOnceRaw(msg: string): void {
+  if (warnedRaw.has(msg)) return;
+  warnedRaw.add(msg);
+  // eslint-disable-next-line no-console
+  console.warn(`[feed] ${msg}`);
 }
 
 /** Inflate a payload if its topic is compressed; otherwise pass through. */
