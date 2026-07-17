@@ -87,13 +87,27 @@ function decodeSnapshot(r: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
+// Diagnostic only, logged once per topic so a systematic decode failure
+// doesn't spam the log at feed rate (CarData.z arrives multiple times/sec).
+const warnedTopics = new Set<string>();
+function warnOnce(topic: string, msg: string): void {
+  if (warnedTopics.has(topic)) return;
+  warnedTopics.add(topic);
+  // eslint-disable-next-line no-console
+  console.warn(`[feed] ${topic}: ${msg}`);
+}
+
 /** Inflate a payload if its topic is compressed; otherwise pass through. */
 function decodePayload(topic: string, data: unknown): unknown {
-  if (isCompressedTopic(topic) && typeof data === "string") {
+  if (isCompressedTopic(topic)) {
+    if (typeof data !== "string") {
+      warnOnce(topic, `expected a compressed string payload, got ${typeof data}`);
+      return data;
+    }
     try {
       return inflateZ(data);
-    } catch {
-      // Corrupt/partial compressed frame — drop it rather than crash.
+    } catch (err) {
+      warnOnce(topic, `inflate failed: ${(err as Error).message}`);
       return null;
     }
   }

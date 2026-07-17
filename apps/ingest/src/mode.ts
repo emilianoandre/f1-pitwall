@@ -32,10 +32,13 @@ class ActiveSource extends EventEmitter implements StateSource {
   }
 }
 
+const TOPIC_COUNT_LOG_INTERVAL_MS = 10_000;
+
 /** Owns the live feed engine + connection, started/stopped on demand. */
 class LiveController {
   readonly engine = new StateEngine();
   private handle: FeedHandle | null = null;
+  private topicCountTimer: NodeJS.Timeout | null = null;
   connected = false;
 
   constructor(private readonly log: (m: string) => void) {}
@@ -51,12 +54,23 @@ class LiveController {
       },
       { log: this.log },
     );
+    // Diagnostic: per-topic message counts, so a topic that's silently not
+    // arriving (e.g. CarData/Position) shows up as zero instead of just
+    // "the UI doesn't have it".
+    this.topicCountTimer = setInterval(() => {
+      const counts = this.engine.drainTopicCounts();
+      if (Object.keys(counts).length > 0) {
+        this.log(`feed: topic counts (last ${TOPIC_COUNT_LOG_INTERVAL_MS / 1000}s): ${JSON.stringify(counts)}`);
+      }
+    }, TOPIC_COUNT_LOG_INTERVAL_MS);
   }
 
   stop(): void {
     this.handle?.close();
     this.handle = null;
     this.connected = false;
+    if (this.topicCountTimer) clearInterval(this.topicCountTimer);
+    this.topicCountTimer = null;
   }
 }
 

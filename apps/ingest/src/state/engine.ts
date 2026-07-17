@@ -4,6 +4,7 @@ import { SessionStore } from "./store.js";
 import { Deriver } from "./derived.js";
 import { buildSessionState } from "./transform.js";
 import type { FeedCallbacks } from "../feed/source.js";
+import { TopicCounter } from "../logger.js";
 
 /**
  * Owns the raw store + deriver and produces clean SessionState. Emits "changed"
@@ -14,6 +15,7 @@ export class StateEngine extends EventEmitter {
   private store = new SessionStore();
   private deriver = new Deriver();
   private lastMessageAt = 0;
+  private topicCounts = new TopicCounter();
 
   constructor() {
     super();
@@ -33,9 +35,15 @@ export class StateEngine extends EventEmitter {
         this.store.applySnapshot(state);
       },
       onMessage: (topic, data) => {
+        this.topicCounts.bump(topic);
         this.store.applyUpdate(topic, data);
       },
     };
+  }
+
+  /** Per-topic message counts since the last call, for diagnosing the live feed. */
+  drainTopicCounts(): Record<string, number> {
+    return this.topicCounts.drain();
   }
 
   getState(): SessionState {
