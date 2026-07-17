@@ -60,6 +60,12 @@ monorepo, so both services build via Docker instead. This is configured with:
 - `DATA_DIR` = `/data/recordings`, with a volume mounted there to persist
   downloaded sessions across restarts
 - `LOG_LEVEL` = `info`
+- `F1TV_USERNAME` / `F1TV_PASSWORD` — an F1TV subscriber login, required for
+  **live** mode only (player/replay mode doesn't touch the live feed). F1
+  closed unauthenticated access to the live timing feed in 2026; see
+  `apps/ingest/src/feed/auth.ts`. Set these directly in the Railway
+  dashboard's Variables tab rather than via the CLI, so the password never
+  passes through a terminal/chat history.
 
 The ingest starts in **player mode** (users pick sessions from the UI). To run
 it permanently connected to the live feed instead, set the container command

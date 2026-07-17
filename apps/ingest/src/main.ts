@@ -4,7 +4,9 @@
 //   pnpm --filter @f1-dash/ingest dev -- --live       (starts connected to the feed)
 //   pnpm --filter @f1-dash/ingest dev -- --load <id>  (auto-load a recording)
 //
-// Env: PORT, ALLOWED_ORIGIN, DATA_DIR, LOG_LEVEL.
+// Env: PORT, ALLOWED_ORIGIN, DATA_DIR, LOG_LEVEL, F1TV_USERNAME, F1TV_PASSWORD.
+// F1TV_USERNAME/F1TV_PASSWORD are only needed for live mode (see feed/auth.ts) —
+// F1 requires an F1TV login to access the live timing feed.
 
 import type { IngestMode } from "@f1-dash/types";
 import { ModeController } from "./mode.js";

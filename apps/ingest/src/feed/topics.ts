@@ -1,4 +1,4 @@
-// Topics we subscribe to on the F1 SignalR feed.
+// Topics we subscribe to on the F1 live timing feed.
 // Topics ending in ".z" are raw-deflate + base64 compressed (see inflate.ts).
 export const TOPICS = [
   "Heartbeat",
@@ -8,12 +8,16 @@ export const TOPICS = [
   "DriverList",
   "SessionInfo",
   "SessionData",
+  "SessionStatus",
   "TrackStatus",
   "RaceControlMessages",
+  "RcmSeries",
   "WeatherData",
   "CarData.z",
   "Position.z",
   "TeamRadio",
+  "AudioStreams",
+  "ContentStreams",
   "LapCount",
   "ExtrapolatedClock",
   "TopThree",
@@ -21,14 +25,12 @@ export const TOPICS = [
   "ChampionshipPrediction",
 ] as const;
 
-export const HUB = "Streaming";
-export const BASE_URL = "https://livetiming.formula1.com/signalr";
-export const WS_URL = "wss://livetiming.formula1.com/signalr";
+// F1 migrated the live feed from old ASP.NET SignalR to ASP.NET Core SignalR
+// ("signalrcore") in 2026, at the same time it started requiring an F1TV
+// login (see feed/auth.ts) — the endpoints below are the new ones.
+export const NEGOTIATE_URL = "https://livetiming.formula1.com/signalrcore/negotiate";
+export const WS_URL = "wss://livetiming.formula1.com/signalrcore";
 export const STATIC_URL = "https://livetiming.formula1.com/static";
-export const CLIENT_PROTOCOL = "1.5";
-
-// SignalR connectionData is a URL-encoded JSON array naming the hub.
-export const CONNECTION_DATA = JSON.stringify([{ name: HUB }]);
 
 // A browser-like UA — the feed rejects some default clients.
 export const USER_AGENT =

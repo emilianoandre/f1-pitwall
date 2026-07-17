@@ -1,89 +1,122 @@
 import WebSocket from "ws";
 import { request } from "undici";
-import {
-  BASE_URL,
-  WS_URL,
-  HUB,
-  CLIENT_PROTOCOL,
-  CONNECTION_DATA,
-  USER_AGENT,
-  TOPICS,
-} from "./topics.js";
-import { parseFrame, routeFrame } from "./parse.js";
+import { NEGOTIATE_URL, WS_URL, USER_AGENT, TOPICS } from "./topics.js";
+import { RECORD_SEPARATOR, parseFrames, routeFrame } from "./parse.js";
+import { getAccessToken } from "./auth.js";
 import type { FeedCallbacks, FeedHandle } from "./source.js";
+
+const PING_INTERVAL_MS = 15_000;
 
 interface Negotiation {
   connectionToken: string;
-  cookie: string;
+  cookie: string | null;
+  accessToken: string;
 }
 
-/** Step 1: negotiate a connection token + session cookie over HTTP. */
+/** Step 1: get an F1TV access token, then negotiate a connection over HTTP. */
 export async function negotiate(): Promise<Negotiation> {
-  const url =
-    `${BASE_URL}/negotiate` +
-    `?connectionData=${encodeURIComponent(CONNECTION_DATA)}` +
-    `&clientProtocol=${CLIENT_PROTOCOL}`;
+  const accessToken = await getAccessToken();
 
-  const res = await request(url, {
-    method: "GET",
+  // AWS ALB session-stickiness cookie, so negotiate and the websocket that
+  // follows land on the same backend node.
+  const pre = await request(NEGOTIATE_URL, {
+    method: "OPTIONS",
     headers: { "User-Agent": USER_AGENT },
+  });
+  const cookie = extractCookie(pre.headers["set-cookie"], "AWSALBCORS");
+
+  const res = await request(`${NEGOTIATE_URL}?negotiateVersion=1`, {
+    method: "POST",
+    headers: {
+      "User-Agent": USER_AGENT,
+      Authorization: `Bearer ${accessToken}`,
+      ...(cookie ? { Cookie: cookie } : {}),
+    },
   });
 
   if (res.statusCode !== 200) {
     throw new Error(`negotiate failed: HTTP ${res.statusCode}`);
   }
 
-  const body = (await res.body.json()) as { ConnectionToken?: string };
-  if (!body.ConnectionToken) {
-    throw new Error("negotiate response missing ConnectionToken");
+  const body = (await res.body.json()) as {
+    connectionId?: string;
+    connectionToken?: string;
+  };
+  const connectionToken = body.connectionToken ?? body.connectionId;
+  if (!connectionToken) {
+    throw new Error("negotiate response missing connection token");
   }
 
-  // Collect Set-Cookie header(s) to echo back on connect.
-  const setCookie = res.headers["set-cookie"];
-  const cookie = (Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [])
-    .map((c) => c.split(";")[0])
-    .join("; ");
-
-  return { connectionToken: body.ConnectionToken, cookie };
+  return { connectionToken, cookie, accessToken };
 }
 
-/** Step 2+3: open the websocket, subscribe, and route frames to callbacks. */
+/**
+ * Step 2+3: open the websocket, complete the SignalR handshake, subscribe to
+ * TOPICS, and route every subsequent frame to callbacks.
+ */
 export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
   const url =
-    `${WS_URL}/connect` +
-    `?transport=webSockets&clientProtocol=${CLIENT_PROTOCOL}` +
-    `&connectionToken=${encodeURIComponent(neg.connectionToken)}` +
-    `&connectionData=${encodeURIComponent(CONNECTION_DATA)}`;
+    `${WS_URL}?id=${encodeURIComponent(neg.connectionToken)}` +
+    `&access_token=${encodeURIComponent(neg.accessToken)}`;
 
   const ws = new WebSocket(url, {
     headers: {
       "User-Agent": USER_AGENT,
-      "Accept-Encoding": "gzip,identity",
-      Cookie: neg.cookie,
+      ...(neg.cookie ? { Cookie: neg.cookie } : {}),
     },
   });
 
+  // The JSON hub protocol requires a handshake message before anything else;
+  // the first frame we get back acks (or rejects) it.
+  let handshakeDone = false;
+  let pingTimer: NodeJS.Timeout | null = null;
+
+  const cleanup = () => {
+    if (pingTimer) clearInterval(pingTimer);
+    pingTimer = null;
+  };
+
   ws.on("open", () => {
-    const subscribe = {
-      H: HUB,
-      M: "Subscribe",
-      A: [TOPICS],
-      I: 1,
-    };
-    ws.send(JSON.stringify(subscribe));
-    cb.onConnected?.(true);
+    ws.send(`{"protocol":"json","version":1}${RECORD_SEPARATOR}`);
   });
 
   ws.on("message", (buf: WebSocket.RawData) => {
-    const frame = parseFrame(buf.toString());
-    if (frame !== null) routeFrame(frame, cb.onMessage, cb.onSnapshot);
+    for (const frame of parseFrames(buf.toString())) {
+      if (!handshakeDone) {
+        handshakeDone = true;
+        if (frame && typeof frame === "object" && "error" in (frame as Record<string, unknown>)) {
+          cb.onConnected?.(false);
+          ws.close();
+          return;
+        }
+        const subscribe = { type: 1, target: "Subscribe", arguments: [TOPICS], invocationId: "0" };
+        ws.send(JSON.stringify(subscribe) + RECORD_SEPARATOR);
+        pingTimer = setInterval(() => {
+          try {
+            ws.send(`{"type":6}${RECORD_SEPARATOR}`);
+          } catch {
+            /* socket already closing */
+          }
+        }, PING_INTERVAL_MS);
+        cb.onConnected?.(true);
+        continue;
+      }
+      routeFrame(frame, cb.onMessage, cb.onSnapshot);
+    }
   });
 
-  ws.on("close", () => cb.onConnected?.(false));
-  ws.on("error", () => cb.onConnected?.(false));
+  ws.on("close", () => {
+    cleanup();
+    cb.onConnected?.(false);
+  });
+  ws.on("error", () => {
+    cleanup();
+    cb.onConnected?.(false);
+  });
 
   return {
     close() {
+      cleanup();
       try {
         ws.close();
       } catch {
@@ -91,4 +124,13 @@ export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
       }
     },
   };
+}
+
+function extractCookie(setCookie: string | string[] | undefined, name: string): string | null {
+  const list = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+  for (const c of list) {
+    const pair = c.split(";")[0];
+    if (pair?.startsWith(`${name}=`)) return pair;
+  }
+  return null;
 }
