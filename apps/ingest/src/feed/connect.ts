@@ -57,13 +57,16 @@ export async function negotiate(): Promise<Negotiation> {
  * TOPICS, and route every subsequent frame to callbacks.
  */
 export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
-  const url =
-    `${WS_URL}?id=${encodeURIComponent(neg.connectionToken)}` +
-    `&access_token=${encodeURIComponent(neg.accessToken)}`;
+  const url = `${WS_URL}?id=${encodeURIComponent(neg.connectionToken)}`;
 
+  // The reference client (signalrcore, as used by openf1) sends the token as
+  // an Authorization header on the websocket handshake itself, not as an
+  // access_token query param — the latter is enough to connect and get basic
+  // topics, but premium ones (CarData/Position/...) stayed ungranted with it.
   const ws = new WebSocket(url, {
     headers: {
       "User-Agent": USER_AGENT,
+      Authorization: `Bearer ${neg.accessToken}`,
       ...(neg.cookie ? { Cookie: neg.cookie } : {}),
     },
   });
