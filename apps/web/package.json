@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@f1-dash/types": "workspace:*",
+    "launchdarkly-react-client-sdk": "^3.9.2",
     "next": "^15.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

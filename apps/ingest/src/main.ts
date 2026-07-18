@@ -20,6 +20,7 @@ import { ModeController } from "./mode.js";
 import { RecordingRegistry } from "./player/registry.js";
 import { buildServer } from "./server.js";
 import { logger } from "./logger.js";
+import { initLaunchDarkly } from "./launchdarkly.js";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -48,6 +49,8 @@ if (loadId && registry.isDownloaded(loadId)) {
   controller.ensurePlayerMode();
   logger.info({ loadFile }, "auto-loaded file");
 }
+
+await initLaunchDarkly();
 
 const app = buildServer({
   stateSource: controller.source,

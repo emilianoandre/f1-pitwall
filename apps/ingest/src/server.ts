@@ -10,6 +10,7 @@ import type {
 } from "@f1-dash/types";
 import type { Player } from "./player/player.js";
 import type { RecordingRegistry } from "./player/registry.js";
+import { getLaunchDarklyClient } from "./launchdarkly.js";
 
 /** Anything that can produce SessionState and notify on change (engine or player). */
 export interface StateSource extends EventEmitter {
@@ -66,6 +67,23 @@ export function buildServer(opts: ServerOptions): FastifyInstance {
     connected: opts.isConnected(),
     lastMessageAgeMs: opts.lastMessageAgeMs(),
   }));
+
+  // LaunchDarkly demo — safe to remove. Evaluates the flag created during
+  // onboarding so both the server and client SDKs can be verified end-to-end.
+  app.get("/api/launchdarkly-demo", async () => {
+    const client = getLaunchDarklyClient();
+    const context = { kind: "user", key: "demo-user" };
+    const enabled = client
+      ? await client.boolVariation("pitwall-launchdarkly-demo", context, false)
+      : false;
+    return {
+      flag: "pitwall-launchdarkly-demo",
+      enabled,
+      message: enabled
+        ? "LaunchDarkly is working — the flag is ON"
+        : "LaunchDarkly is working — the flag is OFF",
+    };
+  });
 
   app.post("/api/mode", async (req, reply) => {
     const { mode } = (req.body ?? {}) as { mode?: string };

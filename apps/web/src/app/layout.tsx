@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SignOutButton } from "@/components/SignOutButton";
+import { LaunchDarklyProvider } from "@/components/LaunchDarklyProvider";
+import { LaunchDarklyDemoBanner } from "@/components/LaunchDarklyDemoBanner";
 
 export const metadata: Metadata = {
   title: "PitWall · F1 Race Intelligence",
@@ -19,8 +21,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen antialiased">
-        <SignOutButton />
-        {children}
+        <LaunchDarklyProvider>
+          <LaunchDarklyDemoBanner />
+          <SignOutButton />
+          {children}
+        </LaunchDarklyProvider>
       </body>
     </html>
   );
