@@ -20,6 +20,7 @@ export function useLiveConnection(): void {
   const setState = useLiveStore((s) => s.setState);
   const setConnected = useLiveStore((s) => s.setConnected);
   const setFeedConnected = useLiveStore((s) => s.setFeedConnected);
+  const setOpenf1Connected = useLiveStore((s) => s.setOpenf1Connected);
   const setPlayer = useLiveStore((s) => s.setPlayer);
   const setMode = useLiveStore((s) => s.setMode);
 
@@ -39,6 +40,7 @@ export function useLiveConnection(): void {
       // Mode + player status apply immediately (drive the UI chrome).
       setMode(event.mode);
       setFeedConnected(event.connected);
+      setOpenf1Connected(event.openf1Connected);
       if ("player" in event) setPlayer(event.player ?? null);
       if (event.type === "player") {
         // No session data available (idle live feed, or player before its
@@ -71,5 +73,5 @@ export function useLiveConnection(): void {
       clearInterval(drain);
       es.close();
     };
-  }, [setState, setConnected, setFeedConnected, setPlayer, setMode]);
+  }, [setState, setConnected, setFeedConnected, setOpenf1Connected, setPlayer, setMode]);
 }

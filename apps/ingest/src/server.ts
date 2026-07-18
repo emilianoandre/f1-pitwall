@@ -23,6 +23,7 @@ interface ServerOptions {
   getMode: () => IngestMode;
   setMode: (mode: IngestMode) => void;
   isConnected: () => boolean;
+  isOpenf1Connected: () => boolean;
   lastMessageAgeMs: () => number | null;
   allowedOrigin: string;
   throttleMs?: number;
@@ -65,6 +66,7 @@ export function buildServer(opts: ServerOptions): FastifyInstance {
     source: opts.getMode() === "live" ? "live" : "replay",
     mode: opts.getMode(),
     connected: opts.isConnected(),
+    openf1Connected: opts.isOpenf1Connected(),
     lastMessageAgeMs: opts.lastMessageAgeMs(),
   }));
 
@@ -108,10 +110,11 @@ export function buildServer(opts: ServerOptions): FastifyInstance {
 
     const emitState = (type: "snapshot" | "update") => {
       const connected = opts.isConnected();
+      const openf1Connected = opts.isOpenf1Connected();
       if (opts.stateSource.hasData()) {
-        send({ type, ts: Date.now(), state: opts.stateSource.getState(), player: playerStatus(), mode: opts.getMode(), connected });
+        send({ type, ts: Date.now(), state: opts.stateSource.getState(), player: playerStatus(), mode: opts.getMode(), connected, openf1Connected });
       } else {
-        send({ type: "player", ts: Date.now(), player: playerStatus(), mode: opts.getMode(), connected });
+        send({ type: "player", ts: Date.now(), player: playerStatus(), mode: opts.getMode(), connected, openf1Connected });
       }
     };
 

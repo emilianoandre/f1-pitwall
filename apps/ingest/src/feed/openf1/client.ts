@@ -18,6 +18,7 @@ interface Openf1Options {
   baseBackoffMs?: number;
   maxBackoffMs?: number;
   log?: (msg: string) => void;
+  onConnected?: (connected: boolean) => void;
 }
 
 export interface Openf1FeedHandle extends FeedHandle {
@@ -38,6 +39,7 @@ export function connectOpenf1Live(
   const base = opts.baseBackoffMs ?? 1000;
   const max = opts.maxBackoffMs ?? 30000;
   const log = opts.log ?? (() => {});
+  const onConnected = opts.onConnected ?? (() => {});
 
   const carBuffer = new LatestByDriverBuffer<ReturnType<typeof carDataChannels>>();
   const posBuffer = new LatestByDriverBuffer<ReturnType<typeof positionEntry>>();
@@ -81,6 +83,7 @@ export function connectOpenf1Live(
   const handleDisconnect = () => {
     if (disconnectHandled) return;
     disconnectHandled = true;
+    onConnected(false);
     cleanup();
     scheduleRetry();
   };
@@ -123,6 +126,7 @@ export function connectOpenf1Live(
     c.on("connect", () => {
       attempt = 0;
       log("openf1: connected");
+      onConnected(true);
       c.subscribe([CAR_DATA_TOPIC, LOCATION_TOPIC], (err) => {
         if (err) log(`openf1: subscribe error: ${err.message}`);
       });

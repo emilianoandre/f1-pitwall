@@ -25,6 +25,7 @@ function flagChip(status: TrackStatus | undefined) {
 export function TopBar() {
   const mode = useLiveStore((s) => s.mode);
   const feedConnected = useLiveStore((s) => s.feedConnected);
+  const openf1Connected = useLiveStore((s) => s.openf1Connected);
   const session = useLiveStore((s) => s.state?.session);
   const trackStatus = useLiveStore((s) => s.state?.trackStatus);
   const setScreen = useLiveStore((s) => s.setScreen);
@@ -103,6 +104,14 @@ export function TopBar() {
             style={{ fontSize: 9.5, color: feedConnected ? F1.green : F1.amber, paddingLeft: 2 }}
           >
             {feedConnected ? "F1TV connected" : "F1TV disconnected"}
+          </span>
+        )}
+        {isLive && (
+          <span
+            className="f1-overline"
+            style={{ fontSize: 9.5, color: openf1Connected ? F1.green : F1.muted2, paddingLeft: 2 }}
+          >
+            {openf1Connected ? "OpenF1 connected" : "OpenF1 disconnected"}
           </span>
         )}
       </div>

@@ -257,6 +257,8 @@ export interface SnapshotEvent {
   mode: IngestMode;
   /** True when the live feed's own upstream connection (to F1) is up; always true in player mode. */
   connected: boolean;
+  /** True when the OpenF1 supplementary feed (CarData/Position) is connected; always false outside live mode. */
+  openf1Connected: boolean;
 }
 
 export interface UpdateEvent {
@@ -266,6 +268,7 @@ export interface UpdateEvent {
   player?: PlayerStatus | null;
   mode: IngestMode;
   connected: boolean;
+  openf1Connected: boolean;
 }
 
 /** Sent when player/mode status changes but the session state hasn't (e.g. pause). */
@@ -275,6 +278,7 @@ export interface PlayerEvent {
   player: PlayerStatus | null;
   mode: IngestMode;
   connected: boolean;
+  openf1Connected: boolean;
 }
 
 export type SseEvent = SnapshotEvent | UpdateEvent | PlayerEvent;
@@ -286,5 +290,6 @@ export interface HealthResponse {
   source: "live" | "replay";
   mode: IngestMode;
   connected: boolean;
+  openf1Connected: boolean;
   lastMessageAgeMs: number | null;
 }

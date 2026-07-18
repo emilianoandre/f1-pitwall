@@ -43,6 +43,7 @@ class LiveController {
   private openf1: Openf1FeedHandle | null = null;
   private topicCountTimer: NodeJS.Timeout | null = null;
   connected = false;
+  openf1Connected = false;
 
   constructor(private readonly log: (m: string) => void) {}
 
@@ -72,7 +73,7 @@ class LiveController {
     if (hasOpenf1Credentials()) {
       this.openf1 = connectOpenf1Live(
         { onMessage: this.engine.callbacks.onMessage },
-        { log: this.log },
+        { log: this.log, onConnected: (c) => { this.openf1Connected = c; } },
       );
     } else {
       this.log("openf1: OPENF1_USERNAME/OPENF1_PASSWORD not set — skipping supplementary feed");
@@ -96,6 +97,7 @@ class LiveController {
     this.openf1 = null;
     this.engine.off("changed", this.onEngineChanged);
     this.connected = false;
+    this.openf1Connected = false;
     if (this.topicCountTimer) clearInterval(this.topicCountTimer);
     this.topicCountTimer = null;
   }
@@ -127,6 +129,11 @@ export class ModeController {
 
   get connected(): boolean {
     return this.currentMode === "live" ? this.live.connected : true;
+  }
+
+  /** Whether the OpenF1 supplementary feed (CarData/Position) is connected — always false outside live mode. */
+  get openf1Connected(): boolean {
+    return this.currentMode === "live" ? this.live.openf1Connected : false;
   }
 
   lastMessageAgeMs(): number | null {
