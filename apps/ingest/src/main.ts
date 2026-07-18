@@ -5,9 +5,13 @@
 //   pnpm --filter @f1-dash/ingest dev -- --load <id>  (auto-load a recording)
 //
 // Env: PORT, ALLOWED_ORIGIN, DATA_DIR, LOG_LEVEL, F1_USERNAME, F1_PASSWORD,
-// INGEST_SHARED_SECRET.
+// OPENF1_USERNAME, OPENF1_PASSWORD, INGEST_SHARED_SECRET, LAUNCHDARKLY_SDK_KEY.
 // F1_USERNAME/F1_PASSWORD are only needed for live mode (see feed/auth.ts) —
 // F1 requires an F1TV login to access the live timing feed.
+// OPENF1_USERNAME/OPENF1_PASSWORD are optional and only used in live mode (see
+// feed/openf1/auth.ts) — they supplement the feed above with CarData/Position,
+// which F1's own feed doesn't grant on this account. Requires a paid OpenF1
+// account; live mode works fine without them, just without that data.
 // INGEST_SHARED_SECRET, if set, must match the web app's proxy on every request
 // except /api/health — see server.ts.
 

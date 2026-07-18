@@ -5,6 +5,8 @@ import { StateEngine } from "./state/engine.js";
 import { Player } from "./player/player.js";
 import { connectLive } from "./feed/live.js";
 import type { FeedHandle } from "./feed/source.js";
+import { hasOpenf1Credentials } from "./feed/openf1/auth.js";
+import { connectOpenf1Live, type Openf1FeedHandle } from "./feed/openf1/client.js";
 
 /**
  * A StateSource that forwards from whichever underlying source is currently
@@ -38,10 +40,19 @@ const TOPIC_COUNT_LOG_INTERVAL_MS = 10_000;
 class LiveController {
   readonly engine = new StateEngine();
   private handle: FeedHandle | null = null;
+  private openf1: Openf1FeedHandle | null = null;
   private topicCountTimer: NodeJS.Timeout | null = null;
   connected = false;
 
   constructor(private readonly log: (m: string) => void) {}
+
+  // A SignalR resnapshot replaces the whole raw store, so CarData/Position
+  // (only ever written by OpenF1, since our own feed doesn't get them) vanish
+  // from it — the OpenF1 writers must re-bootstrap or their next patch would
+  // target a now-nonexistent array. See feed/openf1/writer.ts.
+  private readonly onEngineChanged = (topic?: string): void => {
+    if (topic === undefined) this.openf1?.resetOnSnapshot();
+  };
 
   start(): void {
     if (this.handle) return;
@@ -54,6 +65,19 @@ class LiveController {
       },
       { log: this.log },
     );
+    this.engine.on("changed", this.onEngineChanged);
+
+    // Supplementary source for the topics our own feed doesn't get granted
+    // (CarData/Position) — optional, and independent of the connection above.
+    if (hasOpenf1Credentials()) {
+      this.openf1 = connectOpenf1Live(
+        { onMessage: this.engine.callbacks.onMessage },
+        { log: this.log },
+      );
+    } else {
+      this.log("openf1: OPENF1_USERNAME/OPENF1_PASSWORD not set — skipping supplementary feed");
+    }
+
     // Diagnostic: per-topic message counts, so a topic that's silently not
     // arriving (e.g. CarData/Position) shows up as zero instead of just
     // "the UI doesn't have it".
@@ -68,6 +92,9 @@ class LiveController {
   stop(): void {
     this.handle?.close();
     this.handle = null;
+    this.openf1?.close();
+    this.openf1 = null;
+    this.engine.off("changed", this.onEngineChanged);
     this.connected = false;
     if (this.topicCountTimer) clearInterval(this.topicCountTimer);
     this.topicCountTimer = null;
