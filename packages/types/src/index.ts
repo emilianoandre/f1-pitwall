@@ -149,6 +149,8 @@ export interface SessionInfo {
   started: boolean;
   /** Qualifying/sprint-shootout segment: 1=Q1, 2=Q2, 3=Q3. */
   part: number | null;
+  /** "Q1"/"Q2"/"Q3" for Qualifying, "SQ1"/"SQ2"/"SQ3" for Sprint Qualifying; null outside those. */
+  partLabel: string | null;
 }
 
 export interface SessionClock {

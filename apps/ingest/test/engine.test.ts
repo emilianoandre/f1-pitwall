@@ -25,6 +25,7 @@ describe("StateEngine over real Spanish 2024 qualifying", () => {
     expect(s.session.meetingName).toBe("Spanish Grand Prix");
     expect(s.session.circuitName).toBe("Catalunya");
     expect(s.session.part).toBe(3); // ended in Q3
+    expect(s.session.partLabel).toBe("Q3"); // regular Qualifying, not Sprint
   });
 
   it("produces the correct final classification (top 10 by TLA)", async () => {

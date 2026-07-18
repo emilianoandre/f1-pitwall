@@ -71,6 +71,14 @@ export function TopBar() {
           >
             {session?.name || "—"}
           </span>
+          {session?.partLabel && (
+            <span
+              className="f1-overline"
+              style={{ fontSize: 10, fontWeight: 700, color: F1.accent2, border: `1px solid ${F1.accent}`, background: "rgba(225,6,0,.14)", padding: "2px 7px", borderRadius: 6 }}
+            >
+              {session.partLabel}
+            </span>
+          )}
         </div>
         <div style={{ fontSize: 12, color: F1.muted }}>{session?.circuitName}</div>
       </div>

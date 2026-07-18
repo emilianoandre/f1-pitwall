@@ -7,6 +7,7 @@ import type {
   Weather,
   RaceControlMessage,
   SessionInfo,
+  SessionType,
   SessionClock,
   Battle,
   CarData,
@@ -112,9 +113,13 @@ function buildSession(raw: Any): SessionInfo {
   const circuit = obj(meeting.Circuit);
   const country = obj(meeting.Country);
   const type = sessionType(si.Type ?? si.Name);
+  const name = str(si.Name);
+  const part = obj(raw.TimingData).SessionPart !== undefined
+    ? parseNumber(obj(raw.TimingData).SessionPart)
+    : null;
   return {
     type,
-    name: str(si.Name),
+    name,
     meetingName: str(meeting.Name),
     officialName: str(meeting.OfficialName),
     circuitKey: circuit.Key !== undefined ? parseNumber(circuit.Key) : null,
@@ -123,10 +128,20 @@ function buildSession(raw: Any): SessionInfo {
     startDate: str(si.StartDate),
     path: str(si.Path),
     started: Object.keys(obj(obj(raw.TimingData).Lines)).length > 0,
-    part: obj(raw.TimingData).SessionPart !== undefined
-      ? parseNumber(obj(raw.TimingData).SessionPart)
-      : null,
+    part,
+    partLabel: qualifyingPartLabel(type, name, part),
   };
+}
+
+/**
+ * "Q1"/"Q2"/"Q3" during Qualifying, "SQ1"/"SQ2"/"SQ3" during Sprint Qualifying.
+ * Both share session type "Qualifying" (see sessionType()) — only the raw
+ * session name distinguishes them, so that's what picks the prefix.
+ */
+function qualifyingPartLabel(type: SessionType, name: string, part: number | null): string | null {
+  if (type !== "Qualifying" || part === null || part < 1 || part > 3) return null;
+  const prefix = /sprint/i.test(name) ? "SQ" : "Q";
+  return `${prefix}${part}`;
 }
 
 function buildClock(raw: Any): SessionClock {

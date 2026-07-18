@@ -24,6 +24,34 @@ function rawState(sessionName: string) {
   };
 }
 
+/** Same shape as rawState(), plus TimingData.SessionPart for quali segment tests. */
+function rawStateWithPart(sessionName: string, sessionPart: number) {
+  const s = rawState(sessionName);
+  return { ...s, TimingData: { ...s.TimingData, SessionPart: sessionPart } };
+}
+
+describe("session.partLabel", () => {
+  it("labels regular Qualifying as Q1/Q2/Q3", () => {
+    const s = buildSessionState(rawStateWithPart("Qualifying", 2), emptyDerived());
+    expect(s.session.partLabel).toBe("Q2");
+  });
+
+  it("labels Sprint Qualifying as SQ1/SQ2/SQ3", () => {
+    const s = buildSessionState(rawStateWithPart("Sprint Qualifying", 3), emptyDerived());
+    expect(s.session.partLabel).toBe("SQ3");
+  });
+
+  it("is null outside Qualifying", () => {
+    const s = buildSessionState(rawStateWithPart("Race", 1), emptyDerived());
+    expect(s.session.partLabel).toBeNull();
+  });
+
+  it("is null when no segment is set", () => {
+    const s = buildSessionState(rawState("Qualifying"), emptyDerived());
+    expect(s.session.partLabel).toBeNull();
+  });
+});
+
 describe("buildSessionState order", () => {
   it("ranks Practice by fastest lap, ignoring the feed's Line order", () => {
     const s = buildSessionState(rawState("Practice 1"), emptyDerived());
