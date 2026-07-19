@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import { request } from "undici";
-import { NEGOTIATE_URL, WS_URL, USER_AGENT, TOPICS } from "./topics.js";
+import { NEGOTIATE_URL, WS_URL, USER_AGENT, ORIGIN, REFERER, TOPICS } from "./topics.js";
 import { RECORD_SEPARATOR, parseFrames, routeFrame } from "./parse.js";
 import { getAccessToken } from "./auth.js";
 import type { FeedCallbacks, FeedHandle } from "./source.js";
@@ -21,14 +21,22 @@ export async function negotiate(): Promise<Negotiation> {
   // follows land on the same backend node.
   const pre = await request(NEGOTIATE_URL, {
     method: "OPTIONS",
-    headers: { "User-Agent": USER_AGENT },
+    headers: { "User-Agent": USER_AGENT, Origin: ORIGIN, Referer: REFERER },
   });
   const cookie = extractCookie(pre.headers["set-cookie"], "AWSALBCORS");
 
-  const res = await request(`${NEGOTIATE_URL}?negotiateVersion=1`, {
+  // A real browser's negotiate call carries no Authorization header and no
+  // ?negotiateVersion= query param at all — it authenticates via cookies from
+  // an actual formula1.com login session (entitlement_token, login-session,
+  // etc.) that we don't have. We keep sending our own bearer token here since
+  // it's the only auth we have and negotiate already succeeds with it; only
+  // the query param is dropped to match the real trace.
+  const res = await request(NEGOTIATE_URL, {
     method: "POST",
     headers: {
       "User-Agent": USER_AGENT,
+      Origin: ORIGIN,
+      Referer: REFERER,
       Authorization: `Bearer ${accessToken}`,
       ...(cookie ? { Cookie: cookie } : {}),
     },
@@ -57,16 +65,18 @@ export async function negotiate(): Promise<Negotiation> {
  * TOPICS, and route every subsequent frame to callbacks.
  */
 export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
-  const url = `${WS_URL}?id=${encodeURIComponent(neg.connectionToken)}`;
+  // A real browser session's own websocket connects with the token as an
+  // "authToken" query param (not "access_token", and not an Authorization
+  // header on the handshake) — captured directly from formula1.com's own
+  // live-timing widget network trace.
+  const url =
+    `${WS_URL}?id=${encodeURIComponent(neg.connectionToken)}` +
+    `&authToken=${encodeURIComponent(neg.accessToken)}`;
 
-  // The reference client (signalrcore, as used by openf1) sends the token as
-  // an Authorization header on the websocket handshake itself, not as an
-  // access_token query param — the latter is enough to connect and get basic
-  // topics, but premium ones (CarData/Position/...) stayed ungranted with it.
   const ws = new WebSocket(url, {
     headers: {
       "User-Agent": USER_AGENT,
-      Authorization: `Bearer ${neg.accessToken}`,
+      Origin: ORIGIN,
       ...(neg.cookie ? { Cookie: neg.cookie } : {}),
     },
   });

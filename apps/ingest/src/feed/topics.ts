@@ -37,6 +37,12 @@ export const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+// Captured from a real authenticated browser session's own network trace —
+// the live-timing widget on formula1.com itself (not f1tv.formula1.com) is
+// what actually connects here.
+export const ORIGIN = "https://www.formula1.com";
+export const REFERER = "https://www.formula1.com/";
+
 /** Strip a trailing ".z" so compressed topics are emitted under their base name. */
 export function normalizeTopic(topic: string): string {
   return topic.endsWith(".z") ? topic.slice(0, -2) : topic;
