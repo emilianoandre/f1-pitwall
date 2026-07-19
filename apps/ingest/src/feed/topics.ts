@@ -1,28 +1,33 @@
 // Topics we subscribe to on the F1 live timing feed.
 // Topics ending in ".z" are raw-deflate + base64 compressed (see inflate.ts).
+//
+// This is a real browser session's exact 19-topic list (and order), captured
+// from a raw packet trace whose Subscribe completion genuinely included
+// CarData.z/Position.z, plus PitLaneTimeCollection appended -- the browser
+// doesn't request it, but we actually consume it (state/derived.ts pit-stop
+// history) unlike RcmSeries/TopThree, which the browser also omits and which
+// nothing in this codebase reads either.
 export const TOPICS = [
   "Heartbeat",
-  "TimingData",
+  "AudioStreams",
+  "DriverList",
+  "ExtrapolatedClock",
+  "RaceControlMessages",
+  "SessionInfo",
+  "SessionStatus",
+  "TeamRadio",
   "TimingAppData",
   "TimingStats",
-  "DriverList",
-  "SessionInfo",
-  "SessionData",
-  "SessionStatus",
   "TrackStatus",
-  "RaceControlMessages",
-  "RcmSeries",
   "WeatherData",
-  "CarData.z",
   "Position.z",
-  "TeamRadio",
-  "AudioStreams",
+  "CarData.z",
   "ContentStreams",
+  "SessionData",
+  "TimingData",
   "LapCount",
-  "ExtrapolatedClock",
-  "TopThree",
-  "PitLaneTimeCollection",
   "ChampionshipPrediction",
+  "PitLaneTimeCollection",
 ] as const;
 
 // F1 migrated the live feed from old ASP.NET SignalR to ASP.NET Core SignalR

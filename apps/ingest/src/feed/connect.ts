@@ -99,7 +99,11 @@ export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
   };
 
   ws.on("open", () => {
-    ws.send(`{"protocol":"json","version":1}${RECORD_SEPARATOR}`);
+    // Byte-exact match to a real browser's handshake frame (verified from a
+    // raw packet capture, not reformatted) -- note the two spaces, after
+    // "json", and after "version":. A standard JSON serializer produces the
+    // compact form instead; sent as a literal so the spacing survives.
+    ws.send(`{"protocol":"json", "version": 1}${RECORD_SEPARATOR}`);
   });
 
   ws.on("message", (buf: WebSocket.RawData) => {
@@ -111,7 +115,26 @@ export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
           ws.close();
           return;
         }
-        const subscribe = { type: 1, target: "Subscribe", arguments: [TOPICS], invocationId: "0" };
+        // A real browser sends two Subscribe invocations, not one: first
+        // SessionInfo alone, then everything else -- also verified from a raw
+        // capture. Matched here (with our full TOPICS list on the second),
+        // since a single combined Subscribe is the other thing our client did
+        // differently from the one connection we know gets CarData/Position.
+        const subscribeSessionInfo = {
+          type: 1,
+          invocationId: "1",
+          nonblocking: false,
+          target: "Subscribe",
+          arguments: [["SessionInfo"]],
+        };
+        ws.send(JSON.stringify(subscribeSessionInfo) + RECORD_SEPARATOR);
+        const subscribe = {
+          type: 1,
+          invocationId: "2",
+          nonblocking: false,
+          target: "Subscribe",
+          arguments: [TOPICS],
+        };
         ws.send(JSON.stringify(subscribe) + RECORD_SEPARATOR);
         pingTimer = setInterval(() => {
           try {

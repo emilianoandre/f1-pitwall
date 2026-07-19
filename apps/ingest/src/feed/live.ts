@@ -1,4 +1,5 @@
 import { negotiate, openSocket } from "./connect.js";
+import { connectSidecar } from "./sidecarClient.js";
 import type { FeedCallbacks, FeedHandle } from "./source.js";
 
 interface LiveOptions {
@@ -13,11 +14,24 @@ interface LiveOptions {
  * Connect to the live F1 feed with automatic reconnect + exponential backoff.
  * On every (re)connect the feed sends a fresh `R` snapshot, so downstream state
  * resets cleanly via onSnapshot.
+ *
+ * If F1_SIDECAR_URL is set, connect through apps/f1-sidecar instead of F1
+ * directly — see that service's README for why: a Node WebSocket client
+ * never receives CarData.z/Position.z from F1 regardless of protocol-level
+ * tuning (verified exhaustively), while a Python client with the same token
+ * does. Falls back to the direct connection (degraded, no CarData/Position)
+ * if the sidecar isn't configured.
  */
 export function connectLive(cb: FeedCallbacks, opts: LiveOptions = {}): FeedHandle {
   const base = opts.baseBackoffMs ?? 1000;
   const max = opts.maxBackoffMs ?? 30000;
   const log = opts.log ?? (() => {});
+
+  const sidecarUrl = process.env.F1_SIDECAR_URL;
+  if (sidecarUrl) {
+    log(`feed: using sidecar relay at ${sidecarUrl}`);
+    return connectSidecar(sidecarUrl, cb, { baseBackoffMs: base, maxBackoffMs: max, log });
+  }
 
   let closed = false;
   let attempt = 0;
