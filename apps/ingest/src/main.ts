@@ -5,9 +5,14 @@
 //   pnpm --filter @f1-dash/ingest dev -- --load <id>  (auto-load a recording)
 //
 // Env: PORT, ALLOWED_ORIGIN, DATA_DIR, LOG_LEVEL, F1_USERNAME, F1_PASSWORD,
-// OPENF1_USERNAME, OPENF1_PASSWORD, INGEST_SHARED_SECRET, LAUNCHDARKLY_SDK_KEY.
+// F1_ENTITLEMENT_TOKEN, OPENF1_USERNAME, OPENF1_PASSWORD, INGEST_SHARED_SECRET,
+// LAUNCHDARKLY_SDK_KEY.
 // F1_USERNAME/F1_PASSWORD are only needed for live mode (see feed/auth.ts) —
 // F1 requires an F1TV login to access the live timing feed.
+// F1_ENTITLEMENT_TOKEN is optional — a separate, manually-captured cookie
+// (see feed/auth.ts) that a real browser sends alongside its login; a leading
+// candidate for what actually gates CarData/Position on this feed, since a
+// verified real session with it does get them and ours (without it) doesn't.
 // OPENF1_USERNAME/OPENF1_PASSWORD are optional and only used in live mode (see
 // feed/openf1/auth.ts) — they supplement the feed above with CarData/Position,
 // which F1's own feed doesn't grant on this account. Requires a paid OpenF1

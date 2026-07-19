@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { hasF1tvCredentials, getAccessToken, resetAuthCacheForTests } from "../src/feed/auth.js";
+import { hasF1tvCredentials, getAccessToken, getEntitlementCookie, resetAuthCacheForTests } from "../src/feed/auth.js";
 
 /** Build a fake (unsigned) JWT carrying only the `exp` claim, for testing. */
 function fakeJwt(expSeconds: number): string {
@@ -82,5 +82,27 @@ describe("getAccessToken", () => {
   it("rejects a token that still isn't a 3-part JWT after sanitizing", async () => {
     process.env.F1_SUBSCRIPTION_TOKEN = "not-a-jwt";
     await expect(getAccessToken()).rejects.toThrow(/doesn't look like a valid JWT/);
+  });
+});
+
+describe("getEntitlementCookie", () => {
+  const original = process.env.F1_ENTITLEMENT_TOKEN;
+  afterEach(() => {
+    process.env.F1_ENTITLEMENT_TOKEN = original;
+  });
+
+  it("is null when unset", () => {
+    delete process.env.F1_ENTITLEMENT_TOKEN;
+    expect(getEntitlementCookie()).toBeNull();
+  });
+
+  it("formats a set token as a cookie pair", () => {
+    process.env.F1_ENTITLEMENT_TOKEN = "abc.def.ghi";
+    expect(getEntitlementCookie()).toBe("entitlement_token=abc.def.ghi");
+  });
+
+  it("sanitizes stray whitespace/quotes the same way as the subscription token", () => {
+    process.env.F1_ENTITLEMENT_TOKEN = `  "abc.def.ghi"\n`;
+    expect(getEntitlementCookie()).toBe("entitlement_token=abc.def.ghi");
   });
 });

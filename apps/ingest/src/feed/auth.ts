@@ -143,6 +143,22 @@ function expiryFromJwt(token: string): number {
   return Date.now() + 6 * 24 * 60 * 60 * 1000; // default: refresh after 6 days
 }
 
+/**
+ * F1TV's `entitlement_token` cookie — a separate, HS256-signed JWT from the
+ * subscription token (RS256), issued by a distinct internal service. Verified
+ * live: a real browser session sends it and gets CarData.z/Position.z; our
+ * server-side connection (subscription token only) doesn't and never has.
+ * Manually captured the same way as F1_SUBSCRIPTION_TOKEN — see the module
+ * comment above — and just as short-lived; optional, so requests are
+ * unaffected if it's not set.
+ */
+export function getEntitlementCookie(): string | null {
+  const raw = process.env.F1_ENTITLEMENT_TOKEN;
+  if (!raw) return null;
+  const token = sanitizeToken(raw);
+  return token ? `entitlement_token=${token}` : null;
+}
+
 /** Test-only: reset cached token state between test runs. */
 export function resetAuthCacheForTests(): void {
   cached = null;

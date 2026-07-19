@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import { request } from "undici";
 import { NEGOTIATE_URL, WS_URL, USER_AGENT, ORIGIN, REFERER, TOPICS } from "./topics.js";
 import { RECORD_SEPARATOR, parseFrames, routeFrame } from "./parse.js";
-import { getAccessToken } from "./auth.js";
+import { getAccessToken, getEntitlementCookie } from "./auth.js";
 import type { FeedCallbacks, FeedHandle } from "./source.js";
 
 const PING_INTERVAL_MS = 15_000;
@@ -16,21 +16,28 @@ interface Negotiation {
 /** Step 1: get an F1TV access token, then negotiate a connection over HTTP. */
 export async function negotiate(): Promise<Negotiation> {
   const accessToken = await getAccessToken();
+  const entitlementCookie = getEntitlementCookie();
 
   // AWS ALB session-stickiness cookie, so negotiate and the websocket that
   // follows land on the same backend node.
   const pre = await request(NEGOTIATE_URL, {
     method: "OPTIONS",
-    headers: { "User-Agent": USER_AGENT, Origin: ORIGIN, Referer: REFERER },
+    headers: {
+      "User-Agent": USER_AGENT,
+      Origin: ORIGIN,
+      Referer: REFERER,
+      ...(entitlementCookie ? { Cookie: entitlementCookie } : {}),
+    },
   });
-  const cookie = extractCookie(pre.headers["set-cookie"], "AWSALBCORS");
+  const albCookie = extractCookie(pre.headers["set-cookie"], "AWSALBCORS");
+  const cookie = joinCookies(albCookie, entitlementCookie);
 
-  // A real browser's negotiate call carries no Authorization header and no
-  // ?negotiateVersion= query param at all — it authenticates via cookies from
-  // an actual formula1.com login session (entitlement_token, login-session,
-  // etc.) that we don't have. We keep sending our own bearer token here since
-  // it's the only auth we have and negotiate already succeeds with it; only
-  // the query param is dropped to match the real trace.
+  // A real browser's negotiate call carries no Authorization header at all —
+  // it authenticates via cookies from an actual formula1.com login session
+  // that we mostly don't have. We keep sending our own bearer token here
+  // since it's the only auth we have for everything but the entitlement
+  // cookie above, and negotiate already succeeds with it; the
+  // ?negotiateVersion= query param is dropped to match the real trace.
   const res = await request(NEGOTIATE_URL, {
     method: "POST",
     headers: {
@@ -139,6 +146,11 @@ export function openSocket(neg: Negotiation, cb: FeedCallbacks): FeedHandle {
       }
     },
   };
+}
+
+function joinCookies(...pairs: (string | null)[]): string | null {
+  const present = pairs.filter((p): p is string => p !== null);
+  return present.length > 0 ? present.join("; ") : null;
 }
 
 function extractCookie(setCookie: string | string[] | undefined, name: string): string | null {
