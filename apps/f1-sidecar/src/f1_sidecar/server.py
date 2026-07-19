@@ -4,12 +4,19 @@ from Upstream to all connected Node clients, replaying the cached Subscribe
 completion (the full snapshot) to each newly-connected client so Node's
 existing "every (re)connect gets a fresh snapshot" handling keeps working
 unmodified.
+
+on_client_count_changed lets main.py start/stop the upstream F1 connection
+in step with actual demand — Node only connects here while apps/ingest is
+in live mode, so an idle sidecar (nobody on the live tab) holds no
+connection to F1 at all, rather than maintaining one in the background
+around the clock.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Callable
 
 from websockets.asyncio.server import ServerConnection, broadcast, serve
 
@@ -19,9 +26,12 @@ log = logging.getLogger("f1_sidecar.server")
 
 
 class RelayServer:
-    def __init__(self) -> None:
+    def __init__(self, on_client_count_changed: Callable[[int], None] | None = None) -> None:
         self._clients: set[ServerConnection] = set()
         self._last_snapshot: str | None = None
+        # Public and reassignable — main.py wires this up after construction,
+        # once it has a LifecycleManager to point at.
+        self.on_client_count_changed: Callable[[int], None] = on_client_count_changed or (lambda _count: None)
 
     def on_upstream_frame(self, chunk_with_rs: str) -> None:
         if is_completion_frame(chunk_with_rs):
@@ -41,6 +51,7 @@ class RelayServer:
     async def _handler(self, ws: ServerConnection) -> None:
         self._clients.add(ws)
         log.info("server: ingest client connected (%d total)", len(self._clients))
+        self.on_client_count_changed(len(self._clients))
         try:
             if self._last_snapshot is not None:
                 await ws.send(self._last_snapshot)
@@ -49,6 +60,7 @@ class RelayServer:
         finally:
             self._clients.discard(ws)
             log.info("server: ingest client disconnected (%d total)", len(self._clients))
+            self.on_client_count_changed(len(self._clients))
 
     async def serve_forever(self, port: int) -> None:
         async with serve(self._handler, "0.0.0.0", port):

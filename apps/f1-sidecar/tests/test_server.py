@@ -63,3 +63,26 @@ async def test_upstream_disconnect_closes_client_connections(running_server):
 
     # snapshot cache is cleared, so a fresh client gets nothing replayed
     assert relay._last_snapshot is None
+
+
+async def test_client_count_changed_fires_on_connect_and_disconnect():
+    counts: list[int] = []
+    relay = RelayServer(on_client_count_changed=counts.append)
+    server = await serve(relay._handler, "localhost", 0)
+    port = server.sockets[0].getsockname()[1]
+    try:
+        async with connect(f"ws://localhost:{port}") as ws:
+            await asyncio.sleep(0.05)
+            assert counts == [1]
+            async with connect(f"ws://localhost:{port}") as ws2:
+                await asyncio.sleep(0.05)
+                assert counts == [1, 2]
+                await ws2.close()
+                await asyncio.sleep(0.05)
+                assert counts == [1, 2, 1]
+            await ws.close()
+    finally:
+        server.close()
+        await server.wait_closed()
+    await asyncio.sleep(0.05)
+    assert counts == [1, 2, 1, 0]

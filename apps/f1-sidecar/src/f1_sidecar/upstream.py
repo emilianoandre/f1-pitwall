@@ -50,6 +50,12 @@ class Upstream:
         self._task: asyncio.Task | None = None
 
     def start(self) -> None:
+        """Start (or restart) the connection loop. Idempotent while already
+        running; safe to call again after close() to reconnect on demand."""
+        if self._task is not None and not self._task.done():
+            return
+        self._closed = False
+        self._attempt = 0
         self._task = asyncio.ensure_future(self._run_forever())
 
     async def close(self) -> None:
@@ -60,6 +66,8 @@ class Upstream:
                 await self._task
             except asyncio.CancelledError:
                 pass
+            self._task = None
+        self._on_connected(False)
 
     async def _run_forever(self) -> None:
         while not self._closed:
