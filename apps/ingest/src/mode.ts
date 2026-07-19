@@ -7,6 +7,8 @@ import { connectLive } from "./feed/live.js";
 import type { FeedHandle } from "./feed/source.js";
 import { hasOpenf1Credentials } from "./feed/openf1/auth.js";
 import { connectOpenf1Live, type Openf1FeedHandle } from "./feed/openf1/client.js";
+import { connectOpenf1Full } from "./feed/openf1/fullClient.js";
+import { getDataSourceFlag } from "./launchdarkly.js";
 
 /**
  * A StateSource that forwards from whichever underlying source is currently
@@ -55,8 +57,7 @@ class LiveController {
     if (topic === undefined) this.openf1?.resetOnSnapshot();
   };
 
-  start(): void {
-    if (this.handle) return;
+  private startSignalR(): void {
     this.handle = connectLive(
       {
         ...this.engine.callbacks,
@@ -66,18 +67,45 @@ class LiveController {
       },
       { log: this.log },
     );
-    this.engine.on("changed", this.onEngineChanged);
+  }
 
-    // Supplementary source for the topics our own feed doesn't get granted
-    // (CarData/Position) — optional, and independent of the connection above.
-    if (hasOpenf1Credentials()) {
-      this.openf1 = connectOpenf1Live(
-        { onMessage: this.engine.callbacks.onMessage },
-        { log: this.log, onConnected: (c) => { this.openf1Connected = c; } },
-      );
+  async start(): Promise<void> {
+    if (this.handle || this.openf1) return;
+
+    // Read once per switch into live mode, not hot-swapped under a running
+    // connection — see launchdarkly.ts for the flag's three values.
+    const dataSource = await getDataSourceFlag();
+    if (this.handle || this.openf1) return; // start()/stop() raced while we awaited the flag
+
+    if (dataSource === "openf1" && hasOpenf1Credentials()) {
+      this.log("data-source-flag is 'openf1' — sourcing live data fully from OpenF1 instead of F1's own feed");
+      this.openf1 = connectOpenf1Full(this.engine.callbacks, {
+        log: this.log,
+        onConnected: (c) => {
+          this.connected = c;
+          this.openf1Connected = c;
+        },
+      });
+    } else if (dataSource === "openf1") {
+      this.log("data-source-flag is 'openf1' but OPENF1_USERNAME/PASSWORD aren't set — falling back to F1's own feed only");
+      this.startSignalR();
+    } else if (dataSource === "f1") {
+      this.log("data-source-flag is 'f1' — using only F1's own feed, no OpenF1 supplement");
+      this.startSignalR();
     } else {
-      this.log("openf1: OPENF1_USERNAME/OPENF1_PASSWORD not set — skipping supplementary feed");
+      // "mix": F1's own feed, plus the OpenF1 supplement for the topics it doesn't grant.
+      this.startSignalR();
+      if (hasOpenf1Credentials()) {
+        this.openf1 = connectOpenf1Live(
+          { onMessage: this.engine.callbacks.onMessage },
+          { log: this.log, onConnected: (c) => { this.openf1Connected = c; } },
+        );
+      } else {
+        this.log("openf1: OPENF1_USERNAME/OPENF1_PASSWORD not set — skipping supplementary feed");
+      }
     }
+
+    this.engine.on("changed", this.onEngineChanged);
 
     // Diagnostic: per-topic message counts, so a topic that's silently not
     // arriving (e.g. CarData/Position) shows up as zero instead of just
@@ -145,7 +173,7 @@ export class ModeController {
     this.log(`switching to ${mode} mode`);
     if (mode === "live") {
       this.player.pause();
-      this.live.start();
+      void this.live.start();
       this.source.setActive(this.live.engine);
     } else {
       this.live.stop();

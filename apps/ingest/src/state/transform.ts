@@ -205,13 +205,16 @@ function buildTeamRadio(raw: Any, driverList: Any, session: SessionInfo): Sessio
       const num = str(o.RacingNumber);
       const path = str(o.Path);
       const d = obj(driverList[num]);
+      // F1's own feed sends a relative path (prefixed with base above); OpenF1's
+      // recording_url (full-switch mode) is already absolute — use it as-is.
+      const audioUrl = /^https?:\/\//.test(path) ? path : base && path ? `${base}${path}` : "";
       return {
         utc: str(o.Utc),
         racingNumber: num,
         tla: str(d.Tla) || num,
         teamName: str(d.TeamName),
         teamColour: str(d.TeamColour) || "808080",
-        audioUrl: base && path ? `${base}${path}` : "",
+        audioUrl,
       };
     })
     .filter((c) => c.audioUrl !== "");
