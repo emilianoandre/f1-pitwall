@@ -41,8 +41,13 @@ ENV HOSTNAME="0.0.0.0"
 # import alone happens too late for full auto-instrumentation. newrelic.js
 # would also be parsed as ESM here (package.json "type": "module"), so
 # config is env-var-only.
+#
+# The absolute path is required: --require resolves relative to the process's
+# cwd (/app, from WORKDIR above), but standalone output nests this app's own
+# node_modules under apps/web/, not at the top-level — a bare "newrelic"
+# preload 404s with MODULE_NOT_FOUND from /app.
 ENV NEW_RELIC_NO_CONFIG_FILE=true
-ENV NODE_OPTIONS="--require newrelic"
+ENV NODE_OPTIONS="--require /app/apps/web/node_modules/newrelic"
 # Next standalone output bundles the server + minimal node_modules.
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
