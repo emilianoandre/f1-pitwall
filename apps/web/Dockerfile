@@ -36,6 +36,13 @@ ENV PORT=3000
 # Docker sets HOSTNAME to the container ID; Next's standalone server binds to
 # it literally unless overridden, so traffic from outside the container can't reach it.
 ENV HOSTNAME="0.0.0.0"
+# Preloads the New Relic agent before Next's generated server.js runs — that
+# file is build-generated, not hand-editable, so instrumentation.ts's own
+# import alone happens too late for full auto-instrumentation. newrelic.js
+# would also be parsed as ESM here (package.json "type": "module"), so
+# config is env-var-only.
+ENV NEW_RELIC_NO_CONFIG_FILE=true
+ENV NODE_OPTIONS="--require newrelic"
 # Next standalone output bundles the server + minimal node_modules.
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static

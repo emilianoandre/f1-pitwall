@@ -2,5 +2,11 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
+  # Native/build-script deps pulled in by newrelic — skipped so the agent
+  # stays pure-JS (works fine without them; avoids needing build tools in
+  # the slim Docker images).
+  '@newrelic/fn-inspect': false
+  '@newrelic/native-metrics': false
   esbuild: true
+  protobufjs: false
   sharp: true

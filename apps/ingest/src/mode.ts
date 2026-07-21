@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import newrelic from "newrelic";
 import type { IngestMode } from "@f1-dash/types";
 import type { StateSource } from "./server.js";
 import { StateEngine } from "./state/engine.js";
@@ -76,6 +77,7 @@ class LiveController {
     // connection — see launchdarkly.ts for the flag's three values.
     const dataSource = await getDataSourceFlag();
     if (this.handle || this.openf1) return; // start()/stop() raced while we awaited the flag
+    newrelic.addCustomAttribute("dataSource", dataSource);
 
     if (dataSource === "openf1" && hasOpenf1Credentials()) {
       this.log("data-source-flag is 'openf1' — sourcing live data fully from OpenF1 instead of F1's own feed");
@@ -109,12 +111,20 @@ class LiveController {
 
     // Diagnostic: per-topic message counts, so a topic that's silently not
     // arriving (e.g. CarData/Position) shows up as zero instead of just
-    // "the UI doesn't have it".
+    // "the UI doesn't have it". Also reported to New Relic as custom metrics
+    // on the same interval, so the same gap shows up in dashboards/alerts.
     this.topicCountTimer = setInterval(() => {
       const counts = this.engine.drainTopicCounts();
       if (Object.keys(counts).length > 0) {
         this.log(`feed: topic counts (last ${TOPIC_COUNT_LOG_INTERVAL_MS / 1000}s): ${JSON.stringify(counts)}`);
+        for (const [topic, count] of Object.entries(counts)) {
+          newrelic.recordMetric(`Custom/Ingest/Topic/${topic}`, count);
+        }
       }
+      newrelic.recordMetric("Custom/Ingest/Connected", this.connected ? 1 : 0);
+      newrelic.recordMetric("Custom/Ingest/Openf1Connected", this.openf1Connected ? 1 : 0);
+      const ageMs = this.engine.lastMessageAgeMs();
+      if (ageMs !== null) newrelic.recordMetric("Custom/Ingest/LastMessageAgeMs", ageMs);
     }, TOPIC_COUNT_LOG_INTERVAL_MS);
   }
 

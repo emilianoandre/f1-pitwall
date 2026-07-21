@@ -20,6 +20,7 @@ from typing import Callable
 
 from websockets.asyncio.server import ServerConnection, broadcast, serve
 
+from . import metrics
 from .upstream import is_completion_frame
 
 log = logging.getLogger("f1_sidecar.server")
@@ -52,6 +53,7 @@ class RelayServer:
         self._clients.add(ws)
         log.info("server: ingest client connected (%d total)", len(self._clients))
         self.on_client_count_changed(len(self._clients))
+        metrics.gauge("sidecar.clients.connected", len(self._clients))
         try:
             if self._last_snapshot is not None:
                 await ws.send(self._last_snapshot)
@@ -61,6 +63,7 @@ class RelayServer:
             self._clients.discard(ws)
             log.info("server: ingest client disconnected (%d total)", len(self._clients))
             self.on_client_count_changed(len(self._clients))
+            metrics.gauge("sidecar.clients.connected", len(self._clients))
 
     async def serve_forever(self, port: int) -> None:
         async with serve(self._handler, "0.0.0.0", port):

@@ -22,6 +22,7 @@ from urllib.parse import quote
 
 from websockets.asyncio.client import ClientConnection, connect
 
+from . import metrics
 from .negotiate import negotiate
 from .topics import ORIGIN, TOPICS, USER_AGENT, WS_URL
 
@@ -68,6 +69,7 @@ class Upstream:
                 pass
             self._task = None
         self._on_connected(False)
+        metrics.gauge("sidecar.upstream.connected", 0)
 
     async def _run_forever(self) -> None:
         while not self._closed:
@@ -80,8 +82,11 @@ class Upstream:
             if self._closed:
                 return
             self._on_connected(False)
+            metrics.gauge("sidecar.upstream.connected", 0)
+            metrics.count("sidecar.upstream.reconnect")
             self._attempt += 1
             delay = _backoff_delay(self._attempt)
+            metrics.gauge("sidecar.upstream.backoff_delay_seconds", delay)
             log.info("upstream: reconnecting in %.1fs (attempt %d)", delay, self._attempt)
             await asyncio.sleep(delay)
 
@@ -113,6 +118,7 @@ class Upstream:
                             self._attempt = 0
                             log.info("upstream: connected")
                             self._on_connected(True)
+                            metrics.gauge("sidecar.upstream.connected", 1)
                             continue
                         self._on_frame(chunk + RECORD_SEPARATOR)
             finally:

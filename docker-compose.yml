@@ -1,3 +1,8 @@
+networks:
+  f1-pitwall:
+    name: f1-pitwall
+    driver: bridge
+
 services:
   ingest:
     build:
@@ -5,6 +10,8 @@ services:
       dockerfile: apps/ingest/Dockerfile
     ports:
       - "4000:4000"
+    networks:
+      - f1-pitwall
     environment:
       PORT: "4000"
       ALLOWED_ORIGIN: "http://localhost:3000"
@@ -15,6 +22,14 @@ services:
       # F1_PASSWORD: ""
       # Must match the web service's INGEST_SHARED_SECRET if you set one.
       # INGEST_SHARED_SECRET: ""
+      # Relays through apps/f1-sidecar instead of connecting to F1 directly —
+      # see that service's README for why. Falls back to the direct
+      # connection (degraded, no CarData/Position) if f1-sidecar has no
+      # F1TV credentials configured below.
+      F1_SIDECAR_URL: "ws://f1-sidecar:8001"
+      # Optional New Relic APM — see apps/ingest/.env.example.
+      # NEW_RELIC_LICENSE_KEY: ""
+      # NEW_RELIC_APP_NAME: "f1-pitwall-ingest"
     volumes:
       # Persists downloaded session recordings across container rebuilds.
       - ./data/recordings:/data/recordings
@@ -23,6 +38,29 @@ services:
     #   command: ["pnpm", "exec", "tsx", "src/main.ts", "--live"]
     # To auto-load a downloaded recording on boot:
     #   command: ["pnpm", "exec", "tsx", "src/main.ts", "--load", "<recordingId>"]
+    depends_on:
+      - f1-sidecar
+    restart: unless-stopped
+
+  f1-sidecar:
+    build:
+      context: .
+      dockerfile: apps/f1-sidecar/Dockerfile
+    environment:
+      PORT: "8001"
+      LOG_LEVEL: "info"
+      # Required for live mode — same F1TV credentials as ingest's own
+      # (commented out) F1_USERNAME/F1_PASSWORD above. The sidecar stays up
+      # without them; it just fails to authenticate once ingest actually
+      # connects (i.e. once someone switches to live mode).
+      # F1_USERNAME: ""
+      # F1_PASSWORD: ""
+      # F1_SUBSCRIPTION_TOKEN: ""
+      # Optional New Relic custom metrics — see apps/f1-sidecar/.env.example.
+      # NEW_RELIC_LICENSE_KEY: ""
+      # NEW_RELIC_APP_NAME: "f1-pitwall-sidecar"
+    networks:
+      - f1-pitwall
     restart: unless-stopped
 
   web:
@@ -31,6 +69,8 @@ services:
       dockerfile: apps/web/Dockerfile
     ports:
       - "3000:3000"
+    networks:
+      - f1-pitwall
     environment:
       # Server-only — the /api/ingest proxy forwards both REST calls and the
       # SSE stream to this, so nothing ingest-related reaches the browser
@@ -43,6 +83,9 @@ services:
       # APP_USERNAME: ""
       # APP_PASSWORD: ""
       # AUTH_SECRET: ""
+      # Optional New Relic APM — see apps/web/.env.example.
+      # NEW_RELIC_LICENSE_KEY: ""
+      # NEW_RELIC_APP_NAME: "f1-pitwall-web"
     depends_on:
       - ingest
     restart: unless-stopped

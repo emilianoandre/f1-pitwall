@@ -21,6 +21,9 @@ WORKDIR /app/apps/ingest
 
 ENV PORT=4000
 ENV DATA_DIR=/data/recordings
+# newrelic.js would be parsed as ESM here (package.json "type": "module") —
+# configure the agent via env vars only.
+ENV NEW_RELIC_NO_CONFIG_FILE=true
 EXPOSE 4000
 
 # tsx runs the TS entrypoint directly (throughput is a few KB/s — no build step needed).

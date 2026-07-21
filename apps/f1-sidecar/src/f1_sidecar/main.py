@@ -13,8 +13,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import sys
 
+from . import metrics
 from .auth import has_f1tv_credentials
 from .server import RelayServer
 from .upstream import Upstream
@@ -39,6 +39,7 @@ class LifecycleManager:
             if not self._active:
                 self._active = True
                 self._log.info("lifecycle: ingest client connected — starting upstream F1 connection")
+                metrics.count("sidecar.lifecycle.activated")
                 self._upstream.start()
         else:
             self._schedule_stop()
@@ -63,6 +64,7 @@ class LifecycleManager:
         self._log.info(
             "lifecycle: no ingest clients for %ds — stopping upstream F1 connection", IDLE_STOP_DELAY_S
         )
+        metrics.count("sidecar.lifecycle.idle_stopped")
         await self._upstream.close()
 
 
@@ -79,11 +81,15 @@ async def _main() -> None:
     log = logging.getLogger("f1_sidecar.main")
 
     if not has_f1tv_credentials():
-        log.error(
-            "F1_SUBSCRIPTION_TOKEN or F1_USERNAME/F1_PASSWORD must be set — "
-            "the live timing feed requires an F1TV login"
+        # Not fatal: the upstream connection is only attempted on demand (see
+        # LifecycleManager below), so there's nothing to connect yet anyway.
+        # It'll fail with a clear auth error, retried with backoff, the
+        # moment an ingest client actually connects — same as any other
+        # auth failure.
+        log.warning(
+            "F1_SUBSCRIPTION_TOKEN or F1_USERNAME/F1_PASSWORD are not set — "
+            "the live timing feed will fail to authenticate once a client connects"
         )
-        sys.exit(1)
 
     port = int(os.environ.get("PORT", "8001"))
     relay = RelayServer()
@@ -92,10 +98,12 @@ async def _main() -> None:
     relay.on_client_count_changed = lifecycle.on_client_count_changed
 
     log.info("f1-sidecar: relay server listening on port %d (upstream connects on demand)", port)
+    metrics.start()
     try:
         await relay.serve_forever(port)
     finally:
         await upstream.close()
+        await metrics.stop()
 
 
 def main() -> None:

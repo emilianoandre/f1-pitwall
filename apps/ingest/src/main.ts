@@ -19,6 +19,13 @@
 // account; live mode works fine without them, just without that data.
 // INGEST_SHARED_SECRET, if set, must match the web app's proxy on every request
 // except /api/health — see server.ts.
+// NEW_RELIC_LICENSE_KEY/NEW_RELIC_APP_NAME are optional — enables New Relic
+// APM when set (see NEW_RELIC_NO_CONFIG_FILE in the Dockerfile: config is
+// env-var-only, no newrelic.js, since a .js file here would be parsed as ESM).
+
+// Must be the very first import — the newrelic agent patches Module.require
+// on load, and everything after this evaluates before any later import runs.
+import "newrelic";
 
 import type { IngestMode } from "@f1-dash/types";
 import { ModeController } from "./mode.js";
