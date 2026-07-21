@@ -49,6 +49,7 @@ COPY --from=builder /app/apps/web/public ./apps/web/public
 # standalone-generated package.json there uses pnpm's "workspace:" protocol,
 # which plain npm can't parse.
 RUN mkdir -p /tmp/nr-install && cd /tmp/nr-install && npm install --no-save --omit=dev newrelic@14.3.0 \
+  && rm -rf /app/apps/web/node_modules/newrelic /app/apps/web/node_modules/@newrelic \
   && cp -r /tmp/nr-install/node_modules/. /app/apps/web/node_modules/ \
   && rm -rf /tmp/nr-install
 
