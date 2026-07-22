@@ -143,9 +143,14 @@ export interface SessionInfo {
   circuitKey: number | null;
   circuitName: string;
   countryName: string;
+  /** Local circuit time, no timezone marker — see GmtOffset in the raw feed. */
   startDate: string;
+  endDate: string;
   /** Static-archive path, e.g. "2024/2024-03-02_Bahrain_Grand_Prix/...". */
   path: string;
+  /** Whether "now" falls within [startDate, endDate] (plus a grace window) —
+   * false once the weekend's over, even if stale driver data is still
+   * cached from it. Not "has this session begun" despite the name. */
   started: boolean;
   /** Qualifying/sprint-shootout segment: 1=Q1, 2=Q2, 3=Q3. */
   part: number | null;

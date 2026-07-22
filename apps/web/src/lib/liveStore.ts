@@ -25,6 +25,11 @@ interface LiveStore {
   /** Which top-level screen is showing. */
   screen: "picker" | "dashboard" | "driver";
 
+  /** Whether the Lap Comparison panel is toggled on. */
+  compareMode: boolean;
+  /** Racing numbers picked for lap comparison, in selection order (max 3). */
+  compareSelection: string[];
+
   setState: (state: SessionState | null, ts: number) => void;
   setConnected: (connected: boolean) => void;
   setFeedConnected: (feedConnected: boolean) => void;
@@ -34,6 +39,9 @@ interface LiveStore {
   setMode: (mode: IngestMode) => void;
   setFocus: (racingNumber: string | null) => void;
   setScreen: (screen: "picker" | "dashboard" | "driver") => void;
+  setCompareMode: (on: boolean) => void;
+  /** Adds (up to 3) or removes a driver from the comparison selection. */
+  toggleCompareDriver: (racingNumber: string) => void;
 }
 
 export const useLiveStore = create<LiveStore>((set) => ({
@@ -47,6 +55,8 @@ export const useLiveStore = create<LiveStore>((set) => ({
   player: null,
   focus: null,
   screen: "picker",
+  compareMode: false,
+  compareSelection: [],
   setState: (state, ts) => set({ state, lastAppliedTs: ts }),
   setConnected: (connected) => set({ connected }),
   setFeedConnected: (feedConnected) => set({ feedConnected }),
@@ -56,6 +66,15 @@ export const useLiveStore = create<LiveStore>((set) => ({
   setMode: (mode) => set({ mode }),
   setFocus: (focus) => set({ focus }),
   setScreen: (screen) => set({ screen }),
+  setCompareMode: (compareMode) => set({ compareMode }),
+  toggleCompareDriver: (racingNumber) =>
+    set((s) => {
+      if (s.compareSelection.includes(racingNumber)) {
+        return { compareSelection: s.compareSelection.filter((n) => n !== racingNumber) };
+      }
+      if (s.compareSelection.length >= 3) return {};
+      return { compareSelection: [...s.compareSelection, racingNumber] };
+    }),
 }));
 
 /** Resolve the effective focus driver: explicit selection, else current leader. */

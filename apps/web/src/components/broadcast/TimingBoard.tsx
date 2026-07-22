@@ -4,26 +4,30 @@ import { useLiveStore, useFocusNumber } from "@/lib/liveStore";
 import { F1, teamHex, contrastText, COMPOUND, timingColor, orDash } from "@/lib/design";
 import type { DriverState } from "@f1-dash/types";
 
-function Row({ num, showBestLap }: { num: string; showBestLap: boolean }) {
+function Row({ num, showBestLap, compareMode }: { num: string; showBestLap: boolean; compareMode: boolean }) {
   const d = useLiveStore((s) => s.state?.drivers[num]);
   const focus = useFocusNumber();
   const setFocus = useLiveStore((s) => s.setFocus);
+  const compareSelection = useLiveStore((s) => s.compareSelection);
+  const toggleCompareDriver = useLiveStore((s) => s.toggleCompareDriver);
   if (!d) return null;
 
   const team = teamHex(d.teamColour);
-  const isFocus = focus === num;
+  const compareIndex = compareSelection.indexOf(num);
+  const isFocus = !compareMode && focus === num;
+  const isSelected = compareMode && compareIndex >= 0;
   const comp = COMPOUND[d.currentCompound];
   const intMs = d.intervalMs;
   const intColor = intMs !== null && intMs < 1000 ? F1.green : F1.text;
 
   return (
     <div
-      onClick={() => setFocus(num)}
+      onClick={() => (compareMode ? toggleCompareDriver(num) : setFocus(num))}
       className="flex items-center gap-[9px] px-[12px] cursor-pointer"
       style={{
         padding: "6px 12px",
         borderTop: "1px solid rgba(255,255,255,.04)",
-        background: isFocus ? `${team}22` : "transparent",
+        background: isFocus || isSelected ? `${team}22` : "transparent",
       }}
     >
       <span
@@ -35,6 +39,14 @@ function Row({ num, showBestLap }: { num: string; showBestLap: boolean }) {
       <span style={{ width: 10, fontSize: 11, textAlign: "center", color: F1.muted2 }}>{d.pitOut ? "" : ""}</span>
       <span className="f1-mono" style={{ fontWeight: 700, fontSize: 13.5, width: 38 }}>{d.tla}</span>
       <span className="flex-1 min-w-0 truncate" style={{ fontSize: 12.5, color: F1.muted }}>{d.fullName}</span>
+      {isSelected && (
+        <span
+          title="Selected for comparison"
+          style={{ fontSize: 9, fontWeight: 700, color: team, border: `1px solid ${team}88`, borderRadius: 2, padding: "1px 4px" }}
+        >
+          {compareIndex + 1}
+        </span>
+      )}
       {d.bestLap.overallBest && (
         <span
           title="Fastest lap"
@@ -75,6 +87,8 @@ export function TimingBoard() {
   const order = useLiveStore((s) => s.state?.order) ?? [];
   const sessionType = useLiveStore((s) => s.state?.session.type);
   const showBestLap = sessionType === "Practice" || sessionType === "Qualifying";
+  const compareMode = useLiveStore((s) => s.compareMode);
+  const setCompareMode = useLiveStore((s) => s.setCompareMode);
 
   return (
     <div className="f1-panel flex flex-col overflow-hidden" style={{ gridArea: "board" }}>
@@ -82,7 +96,26 @@ export function TimingBoard() {
         className="flex items-center justify-between"
         style={{ padding: "14px 16px 10px", borderBottom: `1px solid ${F1.border}` }}
       >
-        <span className="f1-cond" style={{ fontWeight: 500, fontSize: 15 }}>Live Timing</span>
+        <div className="flex items-center gap-[10px]">
+          <span className="f1-cond" style={{ fontWeight: 500, fontSize: 15 }}>Live Timing</span>
+          <button
+            onClick={() => setCompareMode(!compareMode)}
+            className="f1-cond"
+            style={{
+              cursor: "pointer",
+              border: `1px solid ${compareMode ? F1.accent : F1.border2}`,
+              borderRadius: 2,
+              padding: "3px 9px",
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: ".04em",
+              background: compareMode ? F1.accent : "transparent",
+              color: compareMode ? "#fff" : F1.muted2,
+            }}
+          >
+            COMPARE
+          </button>
+        </div>
         <div className="flex gap-[14px] f1-overline" style={{ fontSize: 9.5 }}>
           <span style={{ width: 56, textAlign: "right" }}>INTERVAL</span>
           <span style={{ width: 56, textAlign: "right" }}>{showBestLap ? "BEST LAP" : "LAST LAP"}</span>
@@ -94,7 +127,7 @@ export function TimingBoard() {
             Waiting for timing…
           </div>
         ) : (
-          order.map((num) => <Row key={num} num={num} showBestLap={showBestLap} />)
+          order.map((num) => <Row key={num} num={num} showBestLap={showBestLap} compareMode={compareMode} />)
         )}
       </div>
     </div>

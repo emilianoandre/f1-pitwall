@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { buildSessionState } from "../src/state/transform.js";
 import { Deriver } from "../src/state/derived.js";
 
@@ -66,5 +66,61 @@ describe("buildSessionState order", () => {
   it("keeps the feed's Line order for Race", () => {
     const s = buildSessionState(rawState("Race"), emptyDerived());
     expect(s.order.map((n) => s.drivers[n]!.tla)).toEqual(["AAA", "BBB", "CCC"]);
+  });
+});
+
+describe("session.started", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function withSessionDates(startDate: string, endDate: string, gmtOffset = "00:00:00") {
+    const s = rawState("Race");
+    return {
+      ...s,
+      SessionInfo: { ...s.SessionInfo, StartDate: startDate, EndDate: endDate, GmtOffset: gmtOffset },
+    };
+  }
+
+  it("is true while now falls within [StartDate, EndDate]", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-06-22T16:30:00Z"));
+    const raw = withSessionDates("2024-06-22T16:00:00", "2024-06-22T18:00:00");
+    expect(buildSessionState(raw, emptyDerived()).session.started).toBe(true);
+  });
+
+  it("is false for a session that ended days ago (stale cached data)", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-07-01T12:00:00Z"));
+    const raw = withSessionDates("2024-06-22T16:00:00", "2024-06-22T18:00:00");
+    expect(buildSessionState(raw, emptyDerived()).session.started).toBe(false);
+  });
+
+  it("is false before the session's scheduled start", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-06-22T10:00:00Z"));
+    const raw = withSessionDates("2024-06-22T16:00:00", "2024-06-22T18:00:00");
+    expect(buildSessionState(raw, emptyDerived()).session.started).toBe(false);
+  });
+
+  it("stays true for a few hours past EndDate (grace period for overruns)", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-06-22T19:00:00Z")); // 1h after EndDate
+    const raw = withSessionDates("2024-06-22T16:00:00", "2024-06-22T18:00:00");
+    expect(buildSessionState(raw, emptyDerived()).session.started).toBe(true);
+  });
+
+  it("accounts for a non-zero GmtOffset", () => {
+    // Local 16:00 at GMT+2 is 14:00 UTC -- "now" here is only within the
+    // window once GmtOffset is correctly subtracted.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-06-22T14:30:00Z"));
+    const raw = withSessionDates("2024-06-22T16:00:00", "2024-06-22T18:00:00", "02:00:00");
+    expect(buildSessionState(raw, emptyDerived()).session.started).toBe(true);
+  });
+
+  it("is false when StartDate/EndDate are missing", () => {
+    const s = buildSessionState(rawState("Race"), emptyDerived());
+    expect(s.session.started).toBe(false);
   });
 });

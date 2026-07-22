@@ -117,6 +117,8 @@ function buildSession(raw: Any): SessionInfo {
   const part = obj(raw.TimingData).SessionPart !== undefined
     ? parseNumber(obj(raw.TimingData).SessionPart)
     : null;
+  const startDate = str(si.StartDate);
+  const endDate = str(si.EndDate);
   return {
     type,
     name,
@@ -125,12 +127,50 @@ function buildSession(raw: Any): SessionInfo {
     circuitKey: circuit.Key !== undefined ? parseNumber(circuit.Key) : null,
     circuitName: str(circuit.ShortName),
     countryName: str(country.Name),
-    startDate: str(si.StartDate),
+    startDate,
+    endDate,
     path: str(si.Path),
-    started: Object.keys(obj(obj(raw.TimingData).Lines)).length > 0,
+    started: isSessionWindowActive(startDate, endDate, str(si.GmtOffset)),
     part,
     partLabel: qualifyingPartLabel(type, name, part),
   };
+}
+
+// How long past the scheduled EndDate a session still counts as "active" —
+// real sessions commonly overrun (red flags, delays), and this only needs to
+// be generous enough to never cut off a session that's actually still
+// running; a stale *previous* GP weekend is days away regardless of the
+// exact buffer size.
+const SESSION_END_GRACE_MS = 4 * 60 * 60 * 1000;
+
+/**
+ * Whether "now" falls within the session's scheduled [StartDate, EndDate]
+ * window (plus grace), in the circuit's local time — F1's StartDate/EndDate
+ * are local timestamps with no timezone marker, converted via GmtOffset.
+ * Without this check, TimingData/DriverList lines from a finished session
+ * linger in the raw store (F1's feed never explicitly clears them between
+ * events), so `order.length > 0` alone can't tell a live/upcoming session
+ * apart from a stale one from days or weeks ago.
+ */
+function isSessionWindowActive(startDate: string, endDate: string, gmtOffset: string): boolean {
+  if (!startDate || !endDate) return false;
+  const offsetMs = parseGmtOffset(gmtOffset);
+  const startMs = Date.parse(`${startDate}Z`) - offsetMs;
+  const endMs = Date.parse(`${endDate}Z`) - offsetMs;
+  if (Number.isNaN(startMs) || Number.isNaN(endMs)) return false;
+  const now = Date.now();
+  return now >= startMs && now <= endMs + SESSION_END_GRACE_MS;
+}
+
+/** Parses a "±HH:MM:SS" GMT offset (local time relative to UTC) into ms. */
+function parseGmtOffset(v: string): number {
+  const m = /^(-?)(\d{1,2}):(\d{2}):(\d{2})$/.exec(v);
+  if (!m) return 0;
+  const sign = m[1] === "-" ? -1 : 1;
+  const hh = Number(m[2]);
+  const mm = Number(m[3]);
+  const ss = Number(m[4]);
+  return sign * ((hh * 3600 + mm * 60 + ss) * 1000);
 }
 
 /**

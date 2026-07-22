@@ -11,16 +11,26 @@ import { TireStrategy } from "./TireStrategy";
 import { Weather } from "./Weather";
 import { RadioPanel } from "./RadioPanel";
 import { HeadToHead } from "./HeadToHead";
+import { LapComparison } from "./LapComparison";
 import { IdleView } from "@/components/IdleView";
 import { F1 } from "@/lib/design";
 
 export function Dashboard() {
   const hasData = useLiveStore((s) => (s.state?.order.length ?? 0) > 0);
+  // F1's feed never explicitly clears TimingData/DriverList between events —
+  // a finished session's data lingers in the raw store until the next one's
+  // own snapshot overwrites it. In live mode, hasData alone can't tell a
+  // currently-running/upcoming session apart from a stale one from a past
+  // race weekend, so it's gated on the session's own scheduled window too
+  // (see isSessionWindowActive in apps/ingest/src/state/transform.ts).
+  const sessionActive = useLiveStore((s) => s.state?.session.started ?? false);
   const mode = useLiveStore((s) => s.mode);
   const recordingLoaded = useLiveStore((s) => s.player?.loaded ?? false);
   const setScreen = useLiveStore((s) => s.setScreen);
+  const compareMode = useLiveStore((s) => s.compareMode);
 
-  const showPanels = hasData || (mode === "player" && recordingLoaded);
+  const showPanels =
+    (mode === "live" && hasData && sessionActive) || (mode === "player" && recordingLoaded);
 
   return (
     <div className="mx-auto" style={{ maxWidth: 1640, padding: "0 22px 34px" }}>
@@ -32,12 +42,15 @@ export function Dashboard() {
           className="grid"
           style={{
             gridTemplateColumns: "minmax(0,1.32fr) minmax(0,1fr) 336px",
-            gridTemplateAreas: `"track track board" "tele timing board" "tire tire board" "weather radio h2h"`,
+            gridTemplateAreas: compareMode
+              ? `"track track board" "compare compare board" "tele timing board" "tire tire board" "weather radio h2h"`
+              : `"track track board" "tele timing board" "tire tire board" "weather radio h2h"`,
             gap: 14,
           }}
         >
           <TrackMapPanel />
           <TimingBoard />
+          {compareMode && <LapComparison />}
           <Telemetry />
           <SectorTimes />
           <TireStrategy />
