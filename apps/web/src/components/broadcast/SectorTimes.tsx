@@ -52,18 +52,27 @@ function formatDelta(deltaMs: number): string {
   return `${sign}${(Math.abs(deltaMs) / 1000).toFixed(3)}`;
 }
 
-/** Small colored delta badge comparing a fresh (currently-being-timed) sector
- * against the same sector in the driver's own standing best lap — never a
- * mix of independently-best sectors from different laps (see bestLapSectors
- * in apps/ingest/src/state/derived.ts). */
-function DeltaBadge({ deltaMs }: { deltaMs: number }) {
-  const faster = deltaMs < 0;
+/** Delta line comparing a fresh (currently-being-timed) sector against the
+ * same sector in the driver's own standing best lap — never a mix of
+ * independently-best sectors from different laps (see bestLapSectors in
+ * apps/ingest/src/state/derived.ts). Always rendered at a fixed height, even
+ * when there's nothing to show (hidden via visibility, not unmounted) — a
+ * driver going on/off track must never change row height. */
+function DeltaLine({ deltaMs }: { deltaMs: number | null }) {
+  const faster = deltaMs !== null && deltaMs < 0;
   return (
     <span
       className="f1-mono"
-      style={{ fontSize: 9.5, marginLeft: 5, color: faster ? F1.green : F1.amber }}
+      style={{
+        display: "block",
+        fontSize: 9.5,
+        height: 13,
+        lineHeight: "13px",
+        color: faster ? F1.green : F1.amber,
+        visibility: deltaMs === null ? "hidden" : "visible",
+      }}
     >
-      {formatDelta(deltaMs)}
+      {deltaMs !== null ? formatDelta(deltaMs) : "+0.000"}
     </span>
   );
 }
@@ -92,6 +101,11 @@ export function SectorTimes() {
   const order = useLiveStore((s) => s.state?.order) ?? [];
   const drivers = useLiveStore((s) => s.state?.drivers);
   const [showMiniSectors, setShowMiniSectors] = useState(true);
+  // Expands every row uniformly to show the live delta/current-lap-time
+  // lines, or hides them uniformly — the alternative to a per-row automatic
+  // show/hide (which changed row height every time a driver went on/off
+  // track) is a single, deliberate, user-controlled toggle.
+  const [qualyMode, setQualyMode] = useState(true);
 
   // Whichever driver currently holds overallBest for a sector *is* the
   // session's fastest for it — the feed computes this flag itself, so no
@@ -113,21 +127,38 @@ export function SectorTimes() {
       title="Sector Times"
       meta="Last completed lap"
       right={
-        <button
-          onClick={() => setShowMiniSectors((v) => !v)}
-          className="f1-overline"
-          style={{
-            cursor: "pointer",
-            fontSize: 9.5,
-            padding: "4px 9px",
-            borderRadius: 1,
-            border: `1px solid ${showMiniSectors ? F1.accent : F1.border2}`,
-            background: showMiniSectors ? "rgba(225,6,0,.14)" : "transparent",
-            color: showMiniSectors ? F1.accent2 : F1.muted,
-          }}
-        >
-          {showMiniSectors ? "Hide" : "Show"} mini sectors
-        </button>
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <button
+            onClick={() => setQualyMode((v) => !v)}
+            className="f1-overline"
+            style={{
+              cursor: "pointer",
+              fontSize: 9.5,
+              padding: "4px 9px",
+              borderRadius: 1,
+              border: `1px solid ${qualyMode ? F1.purple : F1.border2}`,
+              background: qualyMode ? "rgba(196,107,255,.14)" : "transparent",
+              color: qualyMode ? F1.purple : F1.muted,
+            }}
+          >
+            Qualy mode
+          </button>
+          <button
+            onClick={() => setShowMiniSectors((v) => !v)}
+            className="f1-overline"
+            style={{
+              cursor: "pointer",
+              fontSize: 9.5,
+              padding: "4px 9px",
+              borderRadius: 1,
+              border: `1px solid ${showMiniSectors ? F1.accent : F1.border2}`,
+              background: showMiniSectors ? "rgba(225,6,0,.14)" : "transparent",
+              color: showMiniSectors ? F1.accent2 : F1.muted,
+            }}
+          >
+            {showMiniSectors ? "Hide" : "Show"} mini sectors
+          </button>
+        </div>
       }
       style={{ gridArea: "timing" }}
       bodyStyle={{ paddingLeft: 12, paddingRight: 12 }}
@@ -181,19 +212,37 @@ export function SectorTimes() {
               <span className="f1-mono" style={{ fontWeight: 700, fontSize: 12 }}>{d.tla}</span>
               {d.sectors.map((s, i) => {
                 const best = d.bestLapSectors[i];
-                const showDelta = d.sectorsFresh[i] && best !== null && s.ms !== null;
+                // Comparable-to-own-best-lap only when this sector is fresh
+                // (belongs to the lap currently being timed) — never colored
+                // from the feed's own overallBest/personalBest flags here,
+                // since those mix independently-best sectors across laps,
+                // which is exactly the comparison this feature must avoid.
+                const comparable = d.sectorsFresh[i] && best !== null && s.ms !== null;
+                const deltaMs = comparable ? s.ms! - best! : null;
+                const color = comparable ? (deltaMs! < 0 ? F1.green : F1.amber) : timingColor(s);
                 return (
                   <div key={i}>
-                    <span className="f1-mono" style={{ fontSize: 11.5, color: timingColor(s) }}>{orDash(s.value)}</span>
-                    {showDelta && <DeltaBadge deltaMs={s.ms! - best!} />}
+                    <span className="f1-mono" style={{ fontSize: 11.5, color }}>{orDash(s.value)}</span>
+                    {qualyMode && <DeltaLine deltaMs={deltaMs} />}
                     {showMiniSectors && <SegmentDots segments={s.segments} />}
                   </div>
                 );
               })}
               <div style={{ textAlign: "right" }}>
                 <span className="f1-mono" style={{ fontSize: 11.5, color: timingColor(d.lastLap) }}>{orDash(d.lastLap.value)}</span>
-                {liveMs !== null && (
-                  <div className="f1-mono" style={{ fontSize: 9.5, color: F1.amber }}>on track {formatMs(liveMs)}</div>
+                {qualyMode && (
+                  <div
+                    className="f1-mono"
+                    style={{
+                      fontSize: 9.5,
+                      height: 13,
+                      lineHeight: "13px",
+                      color: F1.amber,
+                      visibility: liveMs !== null ? "visible" : "hidden",
+                    }}
+                  >
+                    on track {liveMs !== null ? formatMs(liveMs) : "0:00.000"}
+                  </div>
                 )}
               </div>
             </div>
