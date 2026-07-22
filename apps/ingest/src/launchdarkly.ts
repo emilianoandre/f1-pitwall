@@ -1,4 +1,5 @@
 import { init, type LDClient } from "@launchdarkly/node-server-sdk";
+import type { DataSource } from "@f1-dash/types";
 import { logger } from "./logger.js";
 
 let client: LDClient | null = null;
@@ -30,8 +31,6 @@ export function getLaunchDarklyClient(): LDClient | null {
 
 // No per-user targeting makes sense for an ingest-process-level flag like this.
 const SERVICE_CONTEXT = { kind: "service" as const, key: "f1-ingest" };
-
-export type DataSource = "f1" | "openf1" | "mix";
 
 /**
  * The "data-source-flag" flag's variation *values* in LaunchDarkly are

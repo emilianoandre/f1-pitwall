@@ -7,6 +7,7 @@ import type {
   SessionState,
   IngestMode,
   PlayerStatus,
+  DataSource,
 } from "@f1-dash/types";
 import type { Player } from "./player/player.js";
 import type { RecordingRegistry } from "./player/registry.js";
@@ -24,6 +25,7 @@ interface ServerOptions {
   setMode: (mode: IngestMode) => void;
   isConnected: () => boolean;
   isOpenf1Connected: () => boolean;
+  getDataSource: () => DataSource | null;
   lastMessageAgeMs: () => number | null;
   allowedOrigin: string;
   throttleMs?: number;
@@ -67,6 +69,7 @@ export function buildServer(opts: ServerOptions): FastifyInstance {
     mode: opts.getMode(),
     connected: opts.isConnected(),
     openf1Connected: opts.isOpenf1Connected(),
+    dataSource: opts.getDataSource(),
     lastMessageAgeMs: opts.lastMessageAgeMs(),
   }));
 
@@ -111,10 +114,11 @@ export function buildServer(opts: ServerOptions): FastifyInstance {
     const emitState = (type: "snapshot" | "update") => {
       const connected = opts.isConnected();
       const openf1Connected = opts.isOpenf1Connected();
+      const dataSource = opts.getDataSource();
       if (opts.stateSource.hasData()) {
-        send({ type, ts: Date.now(), state: opts.stateSource.getState(), player: playerStatus(), mode: opts.getMode(), connected, openf1Connected });
+        send({ type, ts: Date.now(), state: opts.stateSource.getState(), player: playerStatus(), mode: opts.getMode(), connected, openf1Connected, dataSource });
       } else {
-        send({ type: "player", ts: Date.now(), player: playerStatus(), mode: opts.getMode(), connected, openf1Connected });
+        send({ type: "player", ts: Date.now(), player: playerStatus(), mode: opts.getMode(), connected, openf1Connected, dataSource });
       }
     };
 

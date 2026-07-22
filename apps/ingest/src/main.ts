@@ -70,6 +70,7 @@ const app = buildServer({
   setMode: (m) => controller.setMode(m),
   isConnected: () => controller.connected,
   isOpenf1Connected: () => controller.openf1Connected,
+  getDataSource: () => controller.dataSource,
   lastMessageAgeMs: () => controller.lastMessageAgeMs(),
   allowedOrigin,
   internalToken,

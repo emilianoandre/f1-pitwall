@@ -14,6 +14,10 @@ export type TrackStatus =
 
 export type Compound = "SOFT" | "MEDIUM" | "HARD" | "INTERMEDIATE" | "WET" | "UNKNOWN";
 
+/** Which live source is configured via LaunchDarkly's "data-source-flag" —
+ * see apps/ingest/src/launchdarkly.ts. null outside live mode. */
+export type DataSource = "f1" | "openf1" | "mix";
+
 /** Coloring flags for a timing value (lap or sector). */
 export interface TimedValue {
   /** Raw display string from the feed, e.g. "1:23.456" or "" when unset. */
@@ -264,6 +268,8 @@ export interface SnapshotEvent {
   connected: boolean;
   /** True when the OpenF1 supplementary feed (CarData/Position) is connected; always false outside live mode. */
   openf1Connected: boolean;
+  /** The active data-source-flag value; null outside live mode. */
+  dataSource: DataSource | null;
 }
 
 export interface UpdateEvent {
@@ -274,6 +280,7 @@ export interface UpdateEvent {
   mode: IngestMode;
   connected: boolean;
   openf1Connected: boolean;
+  dataSource: DataSource | null;
 }
 
 /** Sent when player/mode status changes but the session state hasn't (e.g. pause). */
@@ -284,6 +291,7 @@ export interface PlayerEvent {
   mode: IngestMode;
   connected: boolean;
   openf1Connected: boolean;
+  dataSource: DataSource | null;
 }
 
 export type SseEvent = SnapshotEvent | UpdateEvent | PlayerEvent;
@@ -296,5 +304,6 @@ export interface HealthResponse {
   mode: IngestMode;
   connected: boolean;
   openf1Connected: boolean;
+  dataSource: DataSource | null;
   lastMessageAgeMs: number | null;
 }

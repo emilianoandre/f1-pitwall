@@ -21,6 +21,7 @@ export function useLiveConnection(): void {
   const setConnected = useLiveStore((s) => s.setConnected);
   const setFeedConnected = useLiveStore((s) => s.setFeedConnected);
   const setOpenf1Connected = useLiveStore((s) => s.setOpenf1Connected);
+  const setDataSource = useLiveStore((s) => s.setDataSource);
   const setPlayer = useLiveStore((s) => s.setPlayer);
   const setMode = useLiveStore((s) => s.setMode);
 
@@ -41,6 +42,7 @@ export function useLiveConnection(): void {
       setMode(event.mode);
       setFeedConnected(event.connected);
       setOpenf1Connected(event.openf1Connected);
+      setDataSource(event.dataSource);
       if ("player" in event) setPlayer(event.player ?? null);
       if (event.type === "player") {
         // No session data available (idle live feed, or player before its
@@ -73,5 +75,5 @@ export function useLiveConnection(): void {
       clearInterval(drain);
       es.close();
     };
-  }, [setState, setConnected, setFeedConnected, setOpenf1Connected, setPlayer, setMode]);
+  }, [setState, setConnected, setFeedConnected, setOpenf1Connected, setDataSource, setPlayer, setMode]);
 }

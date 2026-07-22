@@ -26,6 +26,7 @@ export function TopBar() {
   const mode = useLiveStore((s) => s.mode);
   const feedConnected = useLiveStore((s) => s.feedConnected);
   const openf1Connected = useLiveStore((s) => s.openf1Connected);
+  const dataSource = useLiveStore((s) => s.dataSource);
   const session = useLiveStore((s) => s.state?.session);
   const trackStatus = useLiveStore((s) => s.state?.trackStatus);
   const setScreen = useLiveStore((s) => s.setScreen);
@@ -98,7 +99,10 @@ export function TopBar() {
             REPLAY
           </button>
         </div>
-        {isLive && (
+        {/* Shown per data-source-flag: "f1" -> F1TV only, "openf1" -> OpenF1
+            only, "mix" -> both. Neither shows outside live mode or before
+            the flag's resolved. */}
+        {isLive && (dataSource === "f1" || dataSource === "mix") && (
           <span
             className="f1-overline"
             style={{ fontSize: 9.5, color: feedConnected ? F1.green : F1.amber, paddingLeft: 2 }}
@@ -106,7 +110,7 @@ export function TopBar() {
             {feedConnected ? "F1TV connected" : "F1TV disconnected"}
           </span>
         )}
-        {isLive && (
+        {isLive && (dataSource === "openf1" || dataSource === "mix") && (
           <span
             className="f1-overline"
             style={{ fontSize: 9.5, color: openf1Connected ? F1.green : F1.muted2, paddingLeft: 2 }}

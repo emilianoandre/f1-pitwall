@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import newrelic from "newrelic";
-import type { IngestMode } from "@f1-dash/types";
+import type { DataSource, IngestMode } from "@f1-dash/types";
 import type { StateSource } from "./server.js";
 import { StateEngine } from "./state/engine.js";
 import { Player } from "./player/player.js";
@@ -47,6 +47,8 @@ class LiveController {
   private topicCountTimer: NodeJS.Timeout | null = null;
   connected = false;
   openf1Connected = false;
+  /** The resolved data-source-flag value for the current live connection; null until start() resolves it. */
+  dataSource: DataSource | null = null;
 
   constructor(private readonly log: (m: string) => void) {}
 
@@ -77,6 +79,7 @@ class LiveController {
     // connection — see launchdarkly.ts for the flag's three values.
     const dataSource = await getDataSourceFlag();
     if (this.handle || this.openf1) return; // start()/stop() raced while we awaited the flag
+    this.dataSource = dataSource;
     newrelic.addCustomAttribute("dataSource", dataSource);
 
     if (dataSource === "openf1" && hasOpenf1Credentials()) {
@@ -136,6 +139,7 @@ class LiveController {
     this.engine.off("changed", this.onEngineChanged);
     this.connected = false;
     this.openf1Connected = false;
+    this.dataSource = null;
     if (this.topicCountTimer) clearInterval(this.topicCountTimer);
     this.topicCountTimer = null;
   }
@@ -172,6 +176,11 @@ export class ModeController {
   /** Whether the OpenF1 supplementary feed (CarData/Position) is connected — always false outside live mode. */
   get openf1Connected(): boolean {
     return this.currentMode === "live" ? this.live.openf1Connected : false;
+  }
+
+  /** The active data-source-flag value — null outside live mode. */
+  get dataSource(): DataSource | null {
+    return this.currentMode === "live" ? this.live.dataSource : null;
   }
 
   lastMessageAgeMs(): number | null {

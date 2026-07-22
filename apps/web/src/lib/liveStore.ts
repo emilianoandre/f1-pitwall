@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { SessionState, PlayerStatus, IngestMode } from "@f1-dash/types";
+import type { SessionState, PlayerStatus, IngestMode, DataSource } from "@f1-dash/types";
 
 interface LiveStore {
   state: SessionState | null;
@@ -11,6 +11,8 @@ interface LiveStore {
   feedConnected: boolean;
   /** Whether the OpenF1 supplementary feed (CarData/Position) is connected. Always false outside live mode. */
   openf1Connected: boolean;
+  /** The active data-source-flag value — null outside live mode. */
+  dataSource: DataSource | null;
   /** Broadcast-sync delay in ms (live mode only). */
   delayMs: number;
   lastAppliedTs: number | null;
@@ -34,6 +36,7 @@ interface LiveStore {
   setConnected: (connected: boolean) => void;
   setFeedConnected: (feedConnected: boolean) => void;
   setOpenf1Connected: (openf1Connected: boolean) => void;
+  setDataSource: (dataSource: DataSource | null) => void;
   setDelayMs: (delayMs: number) => void;
   setPlayer: (player: PlayerStatus | null) => void;
   setMode: (mode: IngestMode) => void;
@@ -49,6 +52,7 @@ export const useLiveStore = create<LiveStore>((set) => ({
   connected: false,
   feedConnected: false,
   openf1Connected: false,
+  dataSource: null,
   delayMs: 0,
   lastAppliedTs: null,
   mode: null,
@@ -61,6 +65,7 @@ export const useLiveStore = create<LiveStore>((set) => ({
   setConnected: (connected) => set({ connected }),
   setFeedConnected: (feedConnected) => set({ feedConnected }),
   setOpenf1Connected: (openf1Connected) => set({ openf1Connected }),
+  setDataSource: (dataSource) => set({ dataSource }),
   setDelayMs: (delayMs) => set({ delayMs }),
   setPlayer: (player) => set({ player }),
   setMode: (mode) => set({ mode }),
