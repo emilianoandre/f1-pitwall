@@ -1,5 +1,5 @@
 import type { LapHistoryPoint, GapHistoryPoint, Compound, PitStop } from "@f1-dash/types";
-import { parseLapTime, parseGap, parseCompound, parseBoolLike } from "./parse.js";
+import { parseLapTime, parseGap, parseCompound } from "./parse.js";
 
 /** [S1, S2, S3] ms, or [S1, S2, S3] freshness flags. */
 type SectorTriple<T> = [T, T, T];
@@ -22,6 +22,8 @@ export interface DerivedInternal {
   lastSectorMs: Record<string, SectorTriple<number | null>>;
   freshSectors: Record<string, SectorTriple<boolean>>;
   bestLapSectors: Record<string, SectorTriple<number | null>>;
+  bestLapTimeMsInPart: Record<string, number>;
+  lastSessionPart: number | null | undefined;
 }
 
 type Any = Record<string, unknown>;
@@ -57,6 +59,16 @@ export class Deriver {
    * personal-best lap — set wholesale, only on a genuine new personal best,
    * so a faster sector from a different (slower) lap can never leak in. */
   private bestLapSectors: Record<string, SectorTriple<number | null>> = {};
+  /** Best lap time (ms) seen so far *within the current qualifying segment*
+   * per driver — drives bestLapSectors ourselves rather than trusting the
+   * feed's own PersonalFastest flag, which is scoped to the whole session,
+   * not the current Q1/Q2/Q3 (or SQ1-3) segment. Reset whenever the segment
+   * changes, so Q2/Q3 never compare against a Q1-era best. */
+  private bestLapTimeMsInPart: Record<string, number> = {};
+  /** TimingData.SessionPart last observed — undefined means "no state
+   * observed yet" (so the very first observe() call never triggers a
+   * spurious reset); null/a number thereafter is a real segment value. */
+  private lastSessionPart: number | null | undefined = undefined;
 
   reset(): void {
     this.lapHistory = {};
@@ -68,6 +80,8 @@ export class Deriver {
     this.lastSectorMs = {};
     this.freshSectors = {};
     this.bestLapSectors = {};
+    this.bestLapTimeMsInPart = {};
+    this.lastSessionPart = undefined;
   }
 
   /** Deep clone of internal state — for keyframing a seekable player. */
@@ -81,6 +95,8 @@ export class Deriver {
       lastSectorMs: this.lastSectorMs,
       freshSectors: this.freshSectors,
       bestLapSectors: this.bestLapSectors,
+      bestLapTimeMsInPart: this.bestLapTimeMsInPart,
+      lastSessionPart: this.lastSessionPart,
     });
   }
 
@@ -96,12 +112,26 @@ export class Deriver {
     this.lastSectorMs = c.lastSectorMs ?? {};
     this.freshSectors = c.freshSectors ?? {};
     this.bestLapSectors = c.bestLapSectors ?? {};
+    this.bestLapTimeMsInPart = c.bestLapTimeMsInPart ?? {};
+    this.lastSessionPart = c.lastSessionPart;
   }
 
   /** Call after each store apply with the current merged raw state. */
   observe(raw: Any): void {
     const timingLines = obj(obj(raw.TimingData).Lines);
     const appLines = obj(obj(raw.TimingAppData).Lines);
+
+    // A Q1/Q2/Q3 (or SQ1-3) segment change invalidates any "personal best"
+    // reference from the segment that just ended — Q2 must never compare
+    // against a Q1-era best lap. Practice has no segments (SessionPart stays
+    // constant/absent throughout), so this simply never fires there.
+    const rawPart = obj(raw.TimingData).SessionPart;
+    const currentPart = rawPart !== undefined ? numberOr(rawPart, 0) : null;
+    if (this.lastSessionPart !== undefined && currentPart !== this.lastSessionPart) {
+      this.bestLapSectors = {};
+      this.bestLapTimeMsInPart = {};
+    }
+    this.lastSessionPart = currentPart;
 
     let leaderLap = 0;
 
@@ -141,11 +171,16 @@ export class Deriver {
           });
         }
 
-        // Step 2: on a genuine new personal-best lap, capture all three
-        // sector times together, wholesale — never index-by-index — so a
-        // faster individual sector from a different (slower) lap can never
-        // replace one entry of a still-better lap's triplet.
-        if (parseBoolLike(obj(line.LastLapTime).PersonalFastest)) {
+        // Step 2: on a genuine new best lap *within the current segment*,
+        // capture all three sector times together, wholesale — never
+        // index-by-index — so a faster individual sector from a different
+        // (slower) lap can never replace one entry of a still-better lap's
+        // triplet. Compared against our own bestLapTimeMsInPart, not the
+        // feed's PersonalFastest flag: that flag is session-wide, so it
+        // wouldn't fire for a Q2 lap that's slower than a Q1-era best even
+        // though it should still count as this segment's new reference.
+        if (timeMs !== null && (this.bestLapTimeMsInPart[num] === undefined || timeMs < this.bestLapTimeMsInPart[num]!)) {
+          this.bestLapTimeMsInPart[num] = timeMs;
           this.bestLapSectors[num] = [...currentSectorMs] as SectorTriple<number | null>;
         }
         // The next lap hasn't reported anything yet.

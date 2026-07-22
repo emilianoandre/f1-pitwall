@@ -92,6 +92,27 @@ function currentLapMs(d: DriverState): number | null {
   return any ? sum : null;
 }
 
+/** Cumulative delta between the sectors completed so far this lap and the
+ * *same* sectors from the driver's best lap this qualifying segment — e.g.
+ * with only S1+S2 landed, compares S1+S2 against S1+S2 of the best lap,
+ * never the full best-lap time. Null unless every completed-so-far sector
+ * has a same-index reference to compare against. */
+function cumulativeDelta(d: DriverState): number | null {
+  let currentSum = 0;
+  let bestSum = 0;
+  let any = false;
+  for (let i = 0; i < 3; i++) {
+    if (!d.sectorsFresh[i]) continue;
+    const cur = d.sectors[i]?.ms;
+    const best = d.bestLapSectors[i];
+    if (cur === null || cur === undefined || best === null || best === undefined) return null;
+    currentSum += cur;
+    bestSum += best;
+    any = true;
+  }
+  return any ? currentSum - bestSum : null;
+}
+
 interface SessionBestEntry {
   tla: string;
   value: string;
@@ -170,39 +191,46 @@ export function SectorTimes() {
         <span>S3</span>
         <span style={{ textAlign: "right" }}>LAST</span>
       </div>
-      {/* Pinned session-best reference row — outside the scrollable list
-          below, so it stays visible regardless of scroll position. */}
-      <div
-        className="grid items-center"
-        style={{
-          gridTemplateColumns: COLS,
-          gap: 4,
-          padding: "5px 8px",
-          background: "rgba(196,107,255,.08)",
-          borderTop: `1px solid ${F1.purple}44`,
-          borderBottom: `1px solid ${F1.purple}44`,
-        }}
-      >
-        <span className="f1-overline" style={{ fontSize: 9.5, fontWeight: 700, color: F1.purple }}>BEST</span>
-        {sessionBest.map((entry, i) => (
-          <div key={i}>
-            <span className="f1-mono" style={{ fontSize: 11.5, fontWeight: 700, color: F1.purple }}>
-              {orDash(entry?.value)}
-            </span>
-            {entry && (
-              <span className="f1-overline" style={{ fontSize: 9, color: F1.muted2, marginLeft: 5 }}>
-                {entry.tla}
+      {/* Pinned session-best reference row — hidden in Qualy mode, since that
+          mode is specifically about comparing each driver to their own best
+          lap; a cross-driver session-best reference sits alongside that
+          confusingly. Shown in the plain view otherwise, outside the
+          scrollable list below so it stays visible regardless of scroll. */}
+      {!qualyMode && (
+        <div
+          className="grid items-center"
+          style={{
+            gridTemplateColumns: COLS,
+            gap: 4,
+            padding: "5px 8px",
+            background: "rgba(196,107,255,.08)",
+            borderTop: `1px solid ${F1.purple}44`,
+            borderBottom: `1px solid ${F1.purple}44`,
+          }}
+        >
+          <span className="f1-overline" style={{ fontSize: 9.5, fontWeight: 700, color: F1.purple }}>BEST</span>
+          {sessionBest.map((entry, i) => (
+            <div key={i}>
+              <span className="f1-mono" style={{ fontSize: 11.5, fontWeight: 700, color: F1.purple }}>
+                {orDash(entry?.value)}
               </span>
-            )}
-          </div>
-        ))}
-        <span />
-      </div>
+              {entry && (
+                <span className="f1-overline" style={{ fontSize: 9, color: F1.muted2, marginLeft: 5 }}>
+                  {entry.tla}
+                </span>
+              )}
+            </div>
+          ))}
+          <span />
+        </div>
+      )}
       <div className="overflow-y-auto" style={{ maxHeight: 260 }}>
         {order.map((num) => {
           const d = drivers?.[num];
           if (!d) return null;
           const liveMs = currentLapMs(d);
+          const cumDelta = cumulativeDelta(d);
+          const onTrackColor = cumDelta !== null && cumDelta < 0 ? F1.green : F1.amber;
           return (
             <div
               key={num}
@@ -237,11 +265,12 @@ export function SectorTimes() {
                       fontSize: 9.5,
                       height: 13,
                       lineHeight: "13px",
-                      color: F1.amber,
+                      color: onTrackColor,
                       visibility: liveMs !== null ? "visible" : "hidden",
                     }}
                   >
                     on track {liveMs !== null ? formatMs(liveMs) : "0:00.000"}
+                    {cumDelta !== null && ` (${formatDelta(cumDelta)})`}
                   </div>
                 )}
               </div>
