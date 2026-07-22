@@ -309,6 +309,8 @@ export function buildSessionState(rawState: Any, derived: DerivedData): SessionS
       lastLap: timedValue(t.LastLapTime),
       bestLap: timedValue(t.BestLapTime),
       sectors,
+      sectorsFresh: derived.freshSectors[num] ?? [false, false, false],
+      bestLapSectors: derived.bestLapSectors[num] ?? [null, null, null],
       numberOfLaps: parseNumber(t.NumberOfLaps),
       stints: st,
       currentCompound: current ? current.compound : "UNKNOWN",

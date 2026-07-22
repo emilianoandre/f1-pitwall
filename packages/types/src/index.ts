@@ -69,6 +69,13 @@ export interface DriverState {
   lastLap: TimedValue;
   bestLap: TimedValue;
   sectors: [Sector, Sector, Sector];
+  /** Whether each sector belongs to the lap currently being timed, vs. a
+   * stale value left over from before that lap started. */
+  sectorsFresh: [boolean, boolean, boolean];
+  /** The three sector times from the one lap that stands as this driver's
+   * personal-best lap — never mixed with a faster sector from a different,
+   * slower lap. Null entries until a best lap has been set. */
+  bestLapSectors: [number | null, number | null, number | null];
 
   numberOfLaps: number;
   stints: Stint[];
