@@ -49,7 +49,7 @@ export function Dashboard() {
                   // in reading order: Track Map, (Lap Comparison if on),
                   // Telemetry, Head to Head, Tire Strategy, Team Radio,
                   // Weather.
-                  gridTemplateColumns: "minmax(0,1fr) minmax(0,2fr)",
+                  gridTemplateColumns: "minmax(0,60%) minmax(0,40%)",
                   gridTemplateAreas: compareMode
                     ? `"track board" "compare board" "tele board" "timing board" "tire board" "radio board" "weather board"`
                     : `"track board" "tele board" "timing board" "tire board" "radio board" "weather board"`,
