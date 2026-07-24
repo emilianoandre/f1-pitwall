@@ -103,7 +103,7 @@ export function HeadToHead() {
   const behindHist = (behindNum && lapHistory?.[behindNum]) || [];
 
   return (
-    <Panel title="Head to Head" style={{ gridArea: "h2h" }}>
+    <Panel title="Head to Head" style={{ gridArea: "timing" }}>
       <div className="flex flex-col gap-[8px]">
         <Row role="ahead" d={ahead} gapMs={fd?.intervalMs ?? null} />
         {ahead && fd && (

@@ -6,7 +6,6 @@ import { Transport } from "./Transport";
 import { TrackMapPanel } from "./TrackMapPanel";
 import { TimingBoard } from "./TimingBoard";
 import { Telemetry } from "./Telemetry";
-import { SectorTimes } from "./SectorTimes";
 import { TireStrategy } from "./TireStrategy";
 import { Weather } from "./Weather";
 import { RadioPanel } from "./RadioPanel";
@@ -43,8 +42,8 @@ export function Dashboard() {
           style={{
             gridTemplateColumns: "minmax(0,1.32fr) minmax(0,1fr) 336px",
             gridTemplateAreas: compareMode
-              ? `"track track board" "compare compare board" "tele timing board" "tire tire board" "weather radio h2h"`
-              : `"track track board" "tele timing board" "tire tire board" "weather radio h2h"`,
+              ? `"track track board" "compare compare board" "tele timing board" "tire tire board" "weather radio board"`
+              : `"track track board" "tele timing board" "tire tire board" "weather radio board"`,
             gap: 14,
           }}
         >
@@ -52,11 +51,10 @@ export function Dashboard() {
           <TimingBoard />
           {compareMode && <LapComparison />}
           <Telemetry />
-          <SectorTimes />
+          <HeadToHead />
           <TireStrategy />
           <Weather />
           <RadioPanel />
-          <HeadToHead />
         </div>
       ) : mode === "live" ? (
         <IdleView />
