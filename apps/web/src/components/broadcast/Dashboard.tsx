@@ -27,6 +27,7 @@ export function Dashboard() {
   const recordingLoaded = useLiveStore((s) => s.player?.loaded ?? false);
   const setScreen = useLiveStore((s) => s.setScreen);
   const compareMode = useLiveStore((s) => s.compareMode);
+  const showSectorTimes = useLiveStore((s) => s.showSectorTimes);
 
   const showPanels =
     (mode === "live" && hasData && sessionActive) || (mode === "player" && recordingLoaded);
@@ -39,13 +40,29 @@ export function Dashboard() {
       {showPanels ? (
         <div
           className="grid"
-          style={{
-            gridTemplateColumns: "minmax(0,1.32fr) minmax(0,1fr) 336px",
-            gridTemplateAreas: compareMode
-              ? `"track track board" "compare compare board" "tele timing board" "tire tire board" "weather radio board"`
-              : `"track track board" "tele timing board" "tire tire board" "weather radio board"`,
-            gap: 14,
-          }}
+          style={
+            showSectorTimes
+              ? {
+                  // Live Timing (with its expanded sector breakdown) takes
+                  // over what were columns 2+3; everything else that used
+                  // to live across those columns stacks into column 1,
+                  // in reading order: Track Map, (Lap Comparison if on),
+                  // Telemetry, Head to Head, Tire Strategy, Team Radio,
+                  // Weather.
+                  gridTemplateColumns: "minmax(0,1fr) minmax(0,2fr)",
+                  gridTemplateAreas: compareMode
+                    ? `"track board" "compare board" "tele board" "timing board" "tire board" "radio board" "weather board"`
+                    : `"track board" "tele board" "timing board" "tire board" "radio board" "weather board"`,
+                  gap: 14,
+                }
+              : {
+                  gridTemplateColumns: "minmax(0,1.32fr) minmax(0,1fr) 336px",
+                  gridTemplateAreas: compareMode
+                    ? `"track track board" "compare compare board" "tele timing board" "tire tire board" "weather radio board"`
+                    : `"track track board" "tele timing board" "tire tire board" "weather radio board"`,
+                  gap: 14,
+                }
+          }
         >
           <TrackMapPanel />
           <TimingBoard />
@@ -53,8 +70,8 @@ export function Dashboard() {
           <Telemetry />
           <HeadToHead />
           <TireStrategy />
-          <Weather />
           <RadioPanel />
+          <Weather />
         </div>
       ) : mode === "live" ? (
         <IdleView />

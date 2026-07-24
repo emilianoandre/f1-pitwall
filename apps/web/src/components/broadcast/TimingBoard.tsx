@@ -259,7 +259,11 @@ export function TimingBoard() {
   const showBestLap = sessionType === "Practice" || sessionType === "Qualifying";
   const compareMode = useLiveStore((s) => s.compareMode);
   const setCompareMode = useLiveStore((s) => s.setCompareMode);
-  const [showSectors, setShowSectors] = useState(false);
+  // Lifted to the shared store (not local state) — Dashboard reflows the
+  // whole grid (Live Timing expands to take over columns 2+3) when this
+  // toggles, so it needs to read it too.
+  const showSectors = useLiveStore((s) => s.showSectorTimes);
+  const setShowSectors = useLiveStore((s) => s.setShowSectorTimes);
   const [showMiniSectors, setShowMiniSectors] = useState(true);
   const [qualyMode, setQualyMode] = useState(true);
 
@@ -288,7 +292,7 @@ export function TimingBoard() {
             <button onClick={() => setCompareMode(!compareMode)} className="f1-cond" style={toggleStyle(compareMode, F1.accent)}>
               COMPARE
             </button>
-            <button onClick={() => setShowSectors((v) => !v)} className="f1-cond" style={toggleStyle(showSectors, F1.purple)}>
+            <button onClick={() => setShowSectors(!showSectors)} className="f1-cond" style={toggleStyle(showSectors, F1.purple)}>
               SECTOR TIMES
             </button>
           </div>

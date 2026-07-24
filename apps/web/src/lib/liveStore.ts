@@ -31,6 +31,10 @@ interface LiveStore {
   compareMode: boolean;
   /** Racing numbers picked for lap comparison, in selection order (max 3). */
   compareSelection: string[];
+  /** Whether Live Timing's per-row sector breakdown is expanded — lifted up
+   * from TimingBoard (rather than local component state) because Dashboard
+   * needs it too, to reflow the whole grid when it's toggled. */
+  showSectorTimes: boolean;
 
   setState: (state: SessionState | null, ts: number) => void;
   setConnected: (connected: boolean) => void;
@@ -45,6 +49,7 @@ interface LiveStore {
   setCompareMode: (on: boolean) => void;
   /** Adds (up to 3) or removes a driver from the comparison selection. */
   toggleCompareDriver: (racingNumber: string) => void;
+  setShowSectorTimes: (on: boolean) => void;
 }
 
 export const useLiveStore = create<LiveStore>((set) => ({
@@ -61,6 +66,7 @@ export const useLiveStore = create<LiveStore>((set) => ({
   screen: "picker",
   compareMode: false,
   compareSelection: [],
+  showSectorTimes: false,
   setState: (state, ts) => set({ state, lastAppliedTs: ts }),
   setConnected: (connected) => set({ connected }),
   setFeedConnected: (feedConnected) => set({ feedConnected }),
@@ -80,6 +86,7 @@ export const useLiveStore = create<LiveStore>((set) => ({
       if (s.compareSelection.length >= 3) return {};
       return { compareSelection: [...s.compareSelection, racingNumber] };
     }),
+  setShowSectorTimes: (showSectorTimes) => set({ showSectorTimes }),
 }));
 
 /** Resolve the effective focus driver: explicit selection, else current leader. */
